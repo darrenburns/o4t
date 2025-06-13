@@ -1,0 +1,9 @@
+[package]
+name = "rust-typing-challenge"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+color-eyre = "0.6.5"
+rand = "0.9.1"
+ratatui = "0.29.0"
