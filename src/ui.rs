@@ -1,10 +1,10 @@
 use crate::app::App;
-use ratatui::Frame;
 use ratatui::layout::{Constraint, Direction, Flex, Layout, Rect};
-use ratatui::style::{Color, Modifier, Style};
 use ratatui::style::Color::Yellow;
+use ratatui::style::{Color, Style};
 use ratatui::text::Text;
-use ratatui::widgets::{Block, Borders, Padding, Paragraph, Wrap};
+use ratatui::widgets::{Block, Padding, Paragraph, Wrap};
+use ratatui::Frame;
 
 #[derive(Debug)]
 pub struct Theme {
@@ -32,17 +32,15 @@ pub fn ui(frame: &mut Frame, app: &App) {
     .block(header_block);
     frame.render_widget(title, sections[0]);
 
-    // Body
+    // Body text containing the words to show the user that they must type.
     let words = app.words.iter().map(|word_attempt| word_attempt.word.clone()).collect::<Vec<_>>();
-    let words_string = words.join(" ");
-    let body_text = Text::styled(
-        words_string,
+    let words_paragraph = Paragraph::new(Text::styled(
+        words.join(" "),
         Style::default().fg(Color::Gray),
-    );
-    let words_paragraph = Paragraph::new(body_text.clone())
+    ))
         .wrap(Wrap::default())
         .block(Block::default()
-        .padding(Padding::horizontal(4)))
+        .padding(Padding::horizontal(8)))
         .scroll((0, 0));  // TODO - scroll as we move through the paragraph
     let body_text_render_area = center(
         sections[1],
