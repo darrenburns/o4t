@@ -1,10 +1,8 @@
-use std::fmt::format;
 use crate::app::App;
 use ratatui::layout::Alignment;
 use ratatui::{
-    Frame,
     layout::Constraint,
-    layout::Constraint::{Length, Min, Percentage},
+    layout::Constraint::{Length, Min},
     layout::Direction,
     layout::Flex,
     layout::Flex::SpaceBetween,
@@ -14,6 +12,7 @@ use ratatui::{
     style::{Color, Modifier, Style},
     text::{Span, Text},
     widgets::{Block, Padding, Paragraph, Wrap},
+    Frame,
 };
 use std::rc::Rc;
 
