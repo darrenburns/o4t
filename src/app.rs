@@ -1,9 +1,16 @@
 use crate::words;
 use rand::seq::IteratorRandom;
 use std::time::Duration;
+use ratatui::crossterm::style::Colored::BackgroundColor;
+use ratatui::style::Color;
+use tachyonfx::{fx, Effect, Motion};
+use tachyonfx::CellFilter::BgColor;
+use tachyonfx::Interpolation::{Linear, QuadOut, SineOut};
+use tachyonfx::fx::{delay, explode, fade_from_fg, fade_to, fade_to_fg, Glitch};
 
 pub enum Screen {
     Game,
+    Results,
     Info,
     Exiting,
 }
@@ -53,6 +60,22 @@ pub struct App {
     pub millis_at_current_game_start: u64,
     pub current_millis: u64,
     pub current_score: Score,
+    pub score_effect: Effect,
+    pub load_results_screen_effect: Effect,
+    pub load_words_effect: Effect,
+    pub last_tick_duration: Duration,
+}
+
+pub fn score_effect() -> Effect {
+    delay(1, fade_to_fg(Color::Yellow, (400, Linear)))
+}
+
+pub fn load_words_effect() -> Effect {
+    fx::coalesce((80, QuadOut))
+}
+
+pub fn load_results_screen_effect() -> Effect {
+    fx::coalesce((80, QuadOut))
 }
 
 impl App {
@@ -67,6 +90,10 @@ impl App {
             millis_at_current_game_start: 0,
             current_millis: 0,
             current_score: Score::default(),
+            score_effect: score_effect(),
+            load_words_effect: load_words_effect(),
+            load_results_screen_effect: load_results_screen_effect(),   
+            last_tick_duration: Duration::ZERO,
         }
     }
 
@@ -75,7 +102,11 @@ impl App {
     }
 
     pub fn game_time_elapsed_millis(&self) -> u64 {
-        if self.game_active {self.current_millis - self.millis_at_current_game_start} else { 0 }
+        if self.game_active {
+            self.current_millis - self.millis_at_current_game_start
+        } else {
+            0
+        }
     }
 
     pub fn game_time_remaining_millis(&self) -> u64 {

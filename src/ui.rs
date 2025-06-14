@@ -1,4 +1,5 @@
-use crate::app::App;
+use std::fmt::format;
+use crate::app::{App, Screen};
 use ratatui::layout::Alignment;
 use ratatui::{
     layout::Constraint,
@@ -15,8 +16,19 @@ use ratatui::{
     Frame,
 };
 use std::rc::Rc;
+use tachyonfx::{Duration, EffectRenderer, Shader};
 
-pub fn ui(screen_frame: &mut Frame, app: &App) {
+pub fn ui(screen_frame: &mut Frame, app: &mut App) {
+
+    match app.current_screen {
+        Screen::Game => build_game_screen(screen_frame, app),
+        Screen::Results => build_results_screen(screen_frame, app),
+        Screen::Info => {}
+        Screen::Exiting => {}
+    }
+}
+
+fn build_game_screen(screen_frame: &mut Frame, app: &mut App) {
     let screen_sections = Layout::default()
         .direction(Direction::Vertical)
         .constraints([
@@ -28,19 +40,8 @@ pub fn ui(screen_frame: &mut Frame, app: &App) {
         .split(screen_frame.area());
 
     // Header
-    let header_block = Block::default().padding(Padding::horizontal(1));
-    let mut title_text = Text::styled(
-        "o4t ",
-        Style::default().fg(Yellow).add_modifier(Modifier::BOLD),
-    );
-    title_text.push_span(Span::styled(
-        env!("CARGO_PKG_VERSION"),
-        Style::default()
-            .remove_modifier(Modifier::BOLD)
-            .add_modifier(Modifier::DIM),
-    ));
-    let title = Paragraph::new(title_text).block(header_block);
-    screen_frame.render_widget(title, screen_sections[0]);
+    let header = build_header();
+    screen_frame.render_widget(header, screen_sections[0]);
 
     // Body text containing the words to show the user that they must type.
     let words = app
@@ -116,15 +117,61 @@ pub fn ui(screen_frame: &mut Frame, app: &App) {
         .wrap(Wrap::default())
         .block(Block::default().padding(Padding::horizontal(8)))
         .scroll((0, 0)); // TODO - scroll as we move through the paragraph
+    
+    let launch_effect = &mut app.load_words_effect;
     screen_frame.render_widget(words_paragraph, centered_body_sections[1]);
+    if launch_effect.running() {
+        screen_frame.render_effect(launch_effect, centered_body_sections[1], app.last_tick_duration.into());
+    }
 
     // Footer
-    build_footer(screen_frame, screen_sections, &app);
+    build_footer(screen_frame, screen_sections, app, true);
 }
 
-fn build_footer(screen_frame: &mut Frame, sections: Rc<[Rect]>, app: &App) {
+fn build_header() -> Paragraph<'static> {
+    let header_block = Block::default().padding(Padding::horizontal(1));
+    let mut title_text = Text::styled(
+        "o4t ",
+        Style::default().fg(Yellow).add_modifier(Modifier::BOLD),
+    );
+    title_text.push_span(Span::styled(
+        env!("CARGO_PKG_VERSION"),
+        Style::default()
+            .remove_modifier(Modifier::BOLD)
+            .add_modifier(Modifier::DIM),
+    ));
+    let title = Paragraph::new(title_text).block(header_block);
+    title
+}
+
+fn build_results_screen(screen_frame: &mut Frame, app: &mut App) {
+    let screen_sections = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([
+            Length(1), // Header
+            Min(4),    // Body
+            Length(1), // Footer
+        ])
+        .margin(1)
+        .split(screen_frame.area());
+
+    let score = &app.current_score;
+    let score_screen_summary_text = format!("wpm: {}\ncpm: {}", score.words_per_minute, score.chars_per_minute);
+    let results = Paragraph::new(score_screen_summary_text);
+
+    screen_frame.render_widget(build_header(), screen_sections[0]);
+    
+    let load_effect = &mut app.load_results_screen_effect;
+    screen_frame.render_widget(results, screen_sections[1]);
+    if load_effect.running() {
+        screen_frame.render_effect(load_effect, screen_sections[1], app.last_tick_duration.into());
+    }
+    build_footer(screen_frame, screen_sections, app, false);
+}
+
+fn build_footer(screen_frame: &mut Frame, sections: Rc<[Rect]>, app: &mut App, show_scoring: bool) {
     let footer_sections: [Rect; 2] =
-        Layout::horizontal([Constraint::Ratio(1, 2), Constraint::Ratio(1, 2)])
+        Layout::horizontal([Constraint::Fill(1), Min(10)])
             .flex(SpaceBetween)
             .areas(sections[2]);
 
@@ -139,27 +186,34 @@ fn build_footer(screen_frame: &mut Frame, sections: Rc<[Rect]>, app: &App) {
     ));
     let keys = Paragraph::new(keys_text).block(keys_block);
 
-    let empty_score_placeholder = "-";
-    let score = &app.current_score;
-    let score_block = Block::default().padding(Padding::right(1));
-    let accuracy = if app.game_active && !score.accuracy.is_nan() { format!("{:.0}%", score.accuracy * 100.0) } else { empty_score_placeholder.to_string() };
-    let wpm = if app.game_active && !score.words_per_minute.is_nan() { format!("{:.0}", score.words_per_minute) } else { empty_score_placeholder.to_string() };
-    let score_string = format!(
-        "{}/{} · acc: {} · wpm: {}",
-        score.character_hits.to_string(),
-        score.character_misses.to_string(),
-        accuracy,
-        wpm,
-    );
-    let score_text = Text::styled(score_string, Style::default().fg(Yellow));
-    let score_paragraph = Paragraph::new(score_text)
-        .alignment(Alignment::Right)
-        .block(score_block);
-
     let footer_left_corner = footer_sections[0];
-    let footer_right_corner = footer_sections[1];
     screen_frame.render_widget(keys, footer_left_corner);
-    screen_frame.render_widget(score_paragraph, footer_right_corner);
+
+    let footer_right_corner = footer_sections[1];
+    if show_scoring {
+        let empty_score_placeholder = "-";
+        let score = &app.current_score;
+        let score_block = Block::default().padding(Padding::right(1));
+        let accuracy = if app.game_active && !score.accuracy.is_nan() { format!("{:.0}%", score.accuracy * 100.0) } else { empty_score_placeholder.to_string() };
+        let wpm = if app.game_active && !score.words_per_minute.is_nan() { format!("{:.0}", score.words_per_minute) } else { empty_score_placeholder.to_string() };
+        let score_string = format!(
+            "{}/{} · acc: {} · wpm: {}",
+            score.character_hits.to_string(),
+            score.character_misses.to_string(),
+            accuracy,
+            wpm,
+        );
+        let score_text = Text::styled(score_string, Style::default().fg(Yellow));
+        let score_paragraph = Paragraph::new(score_text)
+            .alignment(Alignment::Right)
+            .block(score_block);
+
+        if app.score_effect.running() {
+            screen_frame.render_effect(&mut app.score_effect, footer_right_corner, app.last_tick_duration.into());
+        }
+        screen_frame.render_widget(score_paragraph, footer_right_corner);
+    }
+
 }
 
 fn build_styled_word(

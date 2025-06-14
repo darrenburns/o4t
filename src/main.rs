@@ -1,17 +1,18 @@
-use ratatui::Terminal;
+use crate::app::{load_results_screen_effect, load_words_effect, score_effect, App, Screen};
+use crate::ui::ui;
 use ratatui::backend::{Backend, CrosstermBackend};
 use ratatui::crossterm::event::{DisableMouseCapture, EnableMouseCapture, Event, KeyCode};
-use ratatui::crossterm::{event, execute};
 use ratatui::crossterm::terminal::{
-    EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode, enable_raw_mode,
+    disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen,
 };
+use ratatui::crossterm::{event, execute};
+use ratatui::Terminal;
 use std::error::Error;
+use std::time::{Instant};
 use std::{io, thread};
-use std::time::Duration;
-use tokio::time::interval;
+use tachyonfx::{Duration, IntoEffect, Shader};
 use tokio::sync::mpsc;
-use crate::app::{App, Screen};
-use crate::ui::ui;
+use tokio::time::interval;
 
 mod app;
 mod ui;
@@ -43,6 +44,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
+
 fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<bool> {
     let (tx, mut rx) = mpsc::channel(100);
 
@@ -53,17 +55,28 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
             .unwrap();
         rt.block_on(background_task(tx));
     });
-
+    terminal.clear()?;
+    
+    let mut last_frame_instant = Instant::now();
+    app.load_words_effect = load_words_effect();
     loop {
+        app.last_tick_duration = last_frame_instant.elapsed().into();
+        last_frame_instant = Instant::now();
+        
         // The ui function will the frame and draw to it
         terminal.draw(|f| ui(f, app))?;
 
         if let Ok(millis_elapsed) = rx.try_recv() {
             app.current_millis = millis_elapsed;
             app.refresh_internal_score();
+            if app.game_time_remaining_millis() == 0 {
+                app.game_active = false;
+                app.current_screen = Screen::Results;
+                app.load_results_screen_effect = load_results_screen_effect();
+            }
         }
 
-        if !event::poll(Duration::from_millis(50))? {
+        if !event::poll(Duration::from_millis(32).into())? {
             continue;
         }
         
@@ -71,6 +84,15 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
             // Skip all key release events.
             if key.kind == event::KeyEventKind::Release {
                 continue;
+            }
+
+            match key.code {
+                // Pressing escape exits.
+                KeyCode::Esc => {
+                    app.current_screen = Screen::Exiting;  // TODO
+                    return Ok(true);
+                }
+                _ => {}
             }
 
             match app.current_screen {
@@ -89,12 +111,11 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
                             app.millis_at_current_game_start = app.current_millis;
                         }
                         app.current_user_input.push(char);
+                        app.score_effect = score_effect();
                     }
-                    // Pressing escape exits.
-                    KeyCode::Esc => {
-                        app.current_screen = Screen::Exiting;  // TODO
-                        return Ok(true)
-                    },
+                    KeyCode::Backspace if app.game_active => {
+                        let _ = app.current_user_input.pop();
+                    }
                     _ => {}
                 }
             _ => {}
@@ -104,7 +125,7 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
 }
 
 async fn background_task(tx: mpsc::Sender<u64>) {
-    let mut interval = interval(Duration::from_millis(50));
+    let mut interval = interval(Duration::from_millis(32).into());
     let mut millis_elapsed = 0u64;
     loop {
         interval.tick().await;
