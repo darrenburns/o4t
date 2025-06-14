@@ -85,24 +85,28 @@ impl App {
     pub fn refresh_internal_score(&mut self) {
         let mut character_hits: u16 = 0;
         let mut character_misses: u16 = 0;
-        let mut num_words = 0;
+        let mut num_correct_words = 0;
 
         // Count hits and misses
         for (index, attempt) in self.words.iter().enumerate() {
-            num_words += 1;
             let zipped_chars;
             if index != self.current_word_offset {
                 zipped_chars = attempt.user_attempt.chars().zip(attempt.word.chars());
             } else {
                 zipped_chars = self.current_user_input.chars().zip(attempt.word.chars());
             }
+            let mut this_word_hits = 0;
             for (user_char, expected_char) in zipped_chars {
                 let is_hit = user_char == expected_char;
                 if is_hit {
                     character_hits += 1;
+                    this_word_hits += 1;
                 } else {
                     character_misses += 1;
                 }
+            }
+            if this_word_hits == attempt.word.len() {
+                num_correct_words += 1
             }
         }
 
@@ -111,9 +115,9 @@ impl App {
         let accuracy = character_hits as f32 / num_chars as f32;
 
         // Chars and words per minute
-        let minutes_elapsed = (self.game_time_elapsed_millis() * 1000 * 60) as f32;
+        let minutes_elapsed = (self.game_time_elapsed_millis() as f32) / 1000. / 60.;
         let chars_per_minute = num_chars as f32 / minutes_elapsed;
-        let words_per_minute = num_words as f32 / minutes_elapsed;
+        let words_per_minute = num_correct_words as f32 / minutes_elapsed;
 
         self.current_score = Score {
             character_hits,
@@ -121,7 +125,7 @@ impl App {
             accuracy,
             chars_per_minute,
             words_per_minute,
-            num_words,
+            num_words: num_correct_words,
         }
     }
 }

@@ -1,3 +1,4 @@
+use std::fmt::format;
 use crate::app::App;
 use ratatui::layout::Alignment;
 use ratatui::{
@@ -107,7 +108,7 @@ pub fn ui(screen_frame: &mut Frame, app: &App) {
             game_time_remaining_secs.to_string() + " ",
             Style::default().fg(Yellow).add_modifier(Modifier::BOLD),
         ))
-        .block(Block::default().padding(Padding::horizontal(8)));
+            .block(Block::default().padding(Padding::horizontal(8)));
         screen_frame.render_widget(game_timer, centered_body_sections[0]);
     }
 
@@ -138,13 +139,18 @@ fn build_footer(screen_frame: &mut Frame, sections: Rc<[Rect]>, app: &App) {
         Style::default().remove_modifier(Modifier::BOLD),
     ));
     let keys = Paragraph::new(keys_text).block(keys_block);
-
+    
+    let empty_score_placeholder = "-";
+    let score = &app.current_score;
     let score_block = Block::default().padding(Padding::right(1));
+    let accuracy = if app.game_active && !score.accuracy.is_nan() { format!("{:.0}%", score.accuracy * 100.0) } else { empty_score_placeholder.to_string() };
+    let wpm = if app.game_active && !score.words_per_minute.is_nan() { format!("{:.1}", score.words_per_minute) } else { empty_score_placeholder.to_string() };
     let score_string = format!(
-        "{}/{} · acc: {:.0}%",
-        app.current_score.character_hits.to_string(),
-        app.current_score.character_misses.to_string(),
-        app.current_score.accuracy * 100.0,
+        "{}/{} · acc: {} · wpm: {}",
+        score.character_hits.to_string(),
+        score.character_misses.to_string(),
+        accuracy,
+        wpm,
     );
     let score_text = Text::styled(score_string, Style::default().fg(Yellow));
     let score_paragraph = Paragraph::new(score_text)
