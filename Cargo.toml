@@ -1,5 +1,6 @@
 [package]
 name = "rust-typing-challenge"
+description = "o4t, over-the-top-typing-test"
 version = "0.1.0"
 edition = "2024"
 

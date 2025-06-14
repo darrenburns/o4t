@@ -19,6 +19,15 @@ pub struct WordAttempt {
     pub user_attempt: String,
 }
 
+pub struct Score {
+    character_hits: u16,
+    character_misses: u16,
+    accuracy: f32,
+    chars_per_minute: f32,
+    words_per_minute: f32,
+    num_words: u16,
+}
+
 impl WordAttempt {
     pub fn new(word: String) -> WordAttempt {
         WordAttempt {
@@ -62,9 +71,49 @@ impl App {
         self.game_active = true;
     }
 
-    pub fn game_time_remaining(&self) -> u64 {
-        let game_time_elapsed = if self.game_active {self.current_millis - self.millis_at_current_game_start} else { 0 };
-        (DEFAULT_GAME_LENGTH.as_millis() as u64).saturating_sub(game_time_elapsed)
+    pub fn game_time_elapsed_millis(&self) -> u64 {
+        if self.game_active {self.current_millis - self.millis_at_current_game_start} else { 0 }
+    }
+
+    pub fn game_time_remaining_millis(&self) -> u64 {
+        (DEFAULT_GAME_LENGTH.as_millis() as u64).saturating_sub(self.game_time_elapsed_millis())
+    }
+
+    pub fn compute_scoring(&self) -> Score {
+        let mut character_hits = 0;
+        let mut character_misses = 0;
+        let mut num_words = 0;
+
+        // Count hits and misses
+        for (index, attempt) in self.words.iter().enumerate() {
+            num_words += 1;
+            if self.current_word_offset > index {
+                let zipped_chars = attempt.user_attempt.chars().zip(attempt.word.chars());
+                for (user_char, expected_char) in zipped_chars {
+                    let is_hit = user_char == expected_char;
+                    character_hits += is_hit as u16;
+                    character_misses += !(is_hit as u16);
+                }
+            }
+        }
+
+        // Compute accuracy based on character hits and misses
+        let num_chars = character_hits.saturating_add(character_misses);
+        let accuracy = character_hits as f32 / num_chars as f32;
+        
+        // Chars and words per minute
+        let minutes_elapsed = (self.game_time_elapsed_millis() * 1000 * 60) as f32;
+        let chars_per_minute = num_chars as f32 / minutes_elapsed;
+        let words_per_minute = num_words as f32 / minutes_elapsed;
+
+        Score {
+            character_hits,
+            character_misses,
+            accuracy,
+            chars_per_minute,
+            words_per_minute,
+            num_words,
+        }
     }
 }
 

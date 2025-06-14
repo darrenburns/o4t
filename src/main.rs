@@ -46,7 +46,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<bool> {
     let (tx, mut rx) = mpsc::channel(100);
 
-    let tokio_handle = thread::spawn(move || {
+    let _tokio_handle = thread::spawn(move || {
         let rt = tokio::runtime::Builder::new_multi_thread()
             .enable_all()
             .build()
@@ -65,6 +65,8 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
         if !event::poll(Duration::from_millis(50))? {
             continue;
         }
+        
+        
         
         if let Event::Key(key) = event::read()? {
             // Skip all key release events.
