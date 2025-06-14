@@ -1,31 +1,31 @@
-use std::ops::Add;
 use crate::app::App;
-use color_eyre::owo_colors::OwoColorize;
-use ratatui::Frame;
-use ratatui::layout::Constraint::{Fill, Length, Min, Percentage};
-use ratatui::layout::Flex::SpaceBetween;
-use ratatui::layout::{Alignment, Constraint, Direction, Flex, Layout, Rect};
-use ratatui::style::Color::{Red, Yellow};
-use ratatui::style::{Color, Modifier, Style};
-use ratatui::text::{Span, Text};
-use ratatui::widgets::{Block, Padding, Paragraph, Wrap};
+use ratatui::layout::Alignment;
+use ratatui::{
+    Frame,
+    layout::Constraint,
+    layout::Constraint::{Length, Min, Percentage},
+    layout::Direction,
+    layout::Flex,
+    layout::Flex::SpaceBetween,
+    layout::Layout,
+    layout::Rect,
+    style::Color::{Red, Yellow},
+    style::{Color, Modifier, Style},
+    text::{Span, Text},
+    widgets::{Block, Padding, Paragraph, Wrap},
+};
+use std::rc::Rc;
 
-#[derive(Debug)]
-pub struct Theme {
-    name: String,
-    title_fg: Color,
-    title_bg: Color,
-}
-
-pub fn ui(frame: &mut Frame, app: &App) {
-    let sections = Layout::default()
+pub fn ui(screen_frame: &mut Frame, app: &App) {
+    let screen_sections = Layout::default()
         .direction(Direction::Vertical)
         .constraints([
             Length(1), // Header
             Min(4),    // Body
             Length(1), // Footer
         ])
-        .split(frame.area());
+        .margin(1)
+        .split(screen_frame.area());
 
     // Header
     let header_block = Block::default().padding(Padding::horizontal(1));
@@ -40,7 +40,7 @@ pub fn ui(frame: &mut Frame, app: &App) {
             .add_modifier(Modifier::DIM),
     ));
     let title = Paragraph::new(title_text).block(header_block);
-    frame.render_widget(title, sections[0]);
+    screen_frame.render_widget(title, screen_sections[0]);
 
     // Body text containing the words to show the user that they must type.
     let words = app
@@ -64,7 +64,10 @@ pub fn ui(frame: &mut Frame, app: &App) {
                 true,
             );
             if word.len() == app.current_user_input.len() {
-                words_text.push_span(Span::styled(" ", Style::default().add_modifier(Modifier::UNDERLINED)))
+                words_text.push_span(Span::styled(
+                    " ",
+                    Style::default().add_modifier(Modifier::UNDERLINED),
+                ))
             } else {
                 words_text.push_span(Span::default().content(" "));
             }
@@ -87,11 +90,14 @@ pub fn ui(frame: &mut Frame, app: &App) {
                 words_text.push_span(Span::default().content(" "));
             }
         }
-
     }
 
     // The body has 2 rows - a single cell height row for the timer, and 5 rows for the text to type
-    let centered_body = center(sections[1], Length(frame.area().width), Length(6));
+    let centered_body = center(
+        screen_sections[1],
+        Length(screen_frame.area().width),
+        Length(6),
+    );
     let centered_body_sections = Layout::vertical([Length(1), Min(5)]).split(centered_body);
 
     // The game timer
@@ -102,7 +108,7 @@ pub fn ui(frame: &mut Frame, app: &App) {
             Style::default().fg(Yellow).add_modifier(Modifier::BOLD),
         ))
         .block(Block::default().padding(Padding::horizontal(8)));
-        frame.render_widget(game_timer, centered_body_sections[0]);
+        screen_frame.render_widget(game_timer, centered_body_sections[0]);
     }
 
     // The words to be typed
@@ -110,19 +116,45 @@ pub fn ui(frame: &mut Frame, app: &App) {
         .wrap(Wrap::default())
         .block(Block::default().padding(Padding::horizontal(8)))
         .scroll((0, 0)); // TODO - scroll as we move through the paragraph
-    frame.render_widget(words_paragraph, centered_body_sections[1]);
+    screen_frame.render_widget(words_paragraph, centered_body_sections[1]);
 
     // Footer
-    let footer_block = Block::default().padding(Padding::horizontal(1));
-    let footer_text = Text::styled("[esc] quit", Style::default().fg(Yellow));
-    let footer_paragraph = Paragraph::new(footer_text).block(footer_block);
-    let footer_area: [Rect; 2] = Layout::horizontal([Percentage(50), Percentage(50)])
-        .flex(SpaceBetween)
-        .areas(sections[2]);
+    build_footer(screen_frame, screen_sections, &app);
+}
 
-    let footer_left_corner = footer_area[0];
-    let footer_right_corner = footer_area[1];
-    frame.render_widget(footer_paragraph, footer_left_corner);
+fn build_footer(screen_frame: &mut Frame, sections: Rc<[Rect]>, app: &App) {
+    let footer_sections: [Rect; 2] =
+        Layout::horizontal([Constraint::Ratio(1, 2), Constraint::Ratio(1, 2)])
+            .flex(SpaceBetween)
+            .areas(sections[2]);
+
+    let keys_block = Block::default().padding(Padding::left(1));
+    let mut keys_text = Text::styled(
+        "ESC",
+        Style::default().fg(Yellow).add_modifier(Modifier::BOLD),
+    );
+    keys_text.push_span(Span::styled(
+        " quit",
+        Style::default().remove_modifier(Modifier::BOLD),
+    ));
+    let keys = Paragraph::new(keys_text).block(keys_block);
+
+    let score_block = Block::default().padding(Padding::right(1));
+    let score_string = format!(
+        "{}/{} · acc: {:.0}%",
+        app.current_score.character_hits.to_string(),
+        app.current_score.character_misses.to_string(),
+        app.current_score.accuracy * 100.0,
+    );
+    let score_text = Text::styled(score_string, Style::default().fg(Yellow));
+    let score_paragraph = Paragraph::new(score_text)
+        .alignment(Alignment::Right)
+        .block(score_block);
+
+    let footer_left_corner = footer_sections[0];
+    let footer_right_corner = footer_sections[1];
+    screen_frame.render_widget(keys, footer_left_corner);
+    screen_frame.render_widget(score_paragraph, footer_right_corner);
 }
 
 fn build_styled_word(

@@ -60,6 +60,7 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
 
         if let Ok(millis_elapsed) = rx.try_recv() {
             app.current_millis = millis_elapsed;
+            app.refresh_internal_score();
         }
 
         if !event::poll(Duration::from_millis(50))? {
