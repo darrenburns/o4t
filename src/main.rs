@@ -55,10 +55,18 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
             match app.current_screen {
                 Screen::Game => match key.code {
                     // Pressing any character, while the game hasn't started, starts the game
+                    KeyCode::Char(' ') => {
+                        if !app.current_user_input.is_empty() {
+                            app.words[app.current_word_offset].user_attempt = app.current_user_input.clone();
+                            app.current_word_offset += 1;
+                            app.current_user_input = String::new();
+                        }
+                    }
                     KeyCode::Char(char) => {
                         if !app.game_active {
                             app.game_active = true;
                         }
+                        app.current_user_input.push(char);
                     }
                     // Pressing escape exits.
                     KeyCode::Esc => {

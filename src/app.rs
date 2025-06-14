@@ -9,24 +9,21 @@ pub enum Screen {
 }
 
 const NUMBER_OF_WORDS_TO_PICK: usize = 500;
-const DEFAULT_GAME_LENGTH: Duration = Duration::from_secs(60);
+const DEFAULT_GAME_LENGTH: Duration = Duration::from_secs(30);
 
 #[derive(Debug, PartialOrd, PartialEq)]
 pub struct WordAttempt {
     // the word the user was asked and attempted to type
     pub word: String,
-    // the user got some prefix of the word correct
-    pub correct_prefix: String,
-    // has the user attempted this word yet?
-    pub has_attempted: bool,
+    // what the user typed for this word
+    pub user_attempt: String,
 }
 
 impl WordAttempt {
     pub fn new(word: String) -> WordAttempt {
         WordAttempt {
             word,
-            correct_prefix: String::new(),
-            has_attempted: false,
+            user_attempt: String::new(),
         }
     }
 }
