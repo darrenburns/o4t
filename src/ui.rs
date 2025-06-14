@@ -139,12 +139,12 @@ fn build_footer(screen_frame: &mut Frame, sections: Rc<[Rect]>, app: &App) {
         Style::default().remove_modifier(Modifier::BOLD),
     ));
     let keys = Paragraph::new(keys_text).block(keys_block);
-    
+
     let empty_score_placeholder = "-";
     let score = &app.current_score;
     let score_block = Block::default().padding(Padding::right(1));
     let accuracy = if app.game_active && !score.accuracy.is_nan() { format!("{:.0}%", score.accuracy * 100.0) } else { empty_score_placeholder.to_string() };
-    let wpm = if app.game_active && !score.words_per_minute.is_nan() { format!("{:.1}", score.words_per_minute) } else { empty_score_placeholder.to_string() };
+    let wpm = if app.game_active && !score.words_per_minute.is_nan() { format!("{:.0}", score.words_per_minute) } else { empty_score_placeholder.to_string() };
     let score_string = format!(
         "{}/{} · acc: {} · wpm: {}",
         score.character_hits.to_string(),
