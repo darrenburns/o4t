@@ -1,13 +1,12 @@
-use std::cmp::min;
-use std::iter::Zip;
-use std::str::Chars;
 use crate::app::App;
-use ratatui::Frame;
-use ratatui::layout::{Constraint, Direction, Flex, Layout, Rect};
+use ratatui::layout::{Alignment, Constraint, Direction, Flex, Layout, Rect};
 use ratatui::style::Color::{Red, Yellow};
 use ratatui::style::{Color, Modifier, Style};
 use ratatui::text::{Span, Text};
 use ratatui::widgets::{Block, Padding, Paragraph, Wrap};
+use ratatui::Frame;
+use ratatui::layout::Constraint::{Length, Percentage};
+use ratatui::layout::Flex::SpaceBetween;
 
 #[derive(Debug)]
 pub struct Theme {
@@ -66,8 +65,8 @@ pub fn ui(frame: &mut Frame, app: &App) {
         .scroll((0, 0)); // TODO - scroll as we move through the paragraph
     let body_text_render_area = center(
         sections[1],
-        Constraint::Length(frame.area().width),
-        Constraint::Length(6),
+        Length(frame.area().width),
+        Length(6),
     );
 
     frame.render_widget(words_paragraph, body_text_render_area);
@@ -76,7 +75,11 @@ pub fn ui(frame: &mut Frame, app: &App) {
     let footer_block = Block::default().padding(Padding::horizontal(1));
     let footer_text = Text::styled("[esc] quit", Style::default().fg(Yellow));
     let footer_paragraph = Paragraph::new(footer_text).block(footer_block);
-    frame.render_widget(footer_paragraph, sections[2]);
+    let footer_area: [Rect; 2] = Layout::horizontal([Percentage(50), Percentage(50)]).flex(SpaceBetween).areas(sections[2]);
+    frame.render_widget(footer_paragraph, footer_area[0]);
+    
+    let game_time_remaining = app.game_time_remaining();
+    frame.render_widget(Text::raw(game_time_remaining.to_string() + " ").alignment(Alignment::Right), footer_area[1]);
 }
 
 fn build_styled_word(words_text: &mut Text, char_style: Style, user_attempt: String, expected_word: String) {

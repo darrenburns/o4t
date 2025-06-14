@@ -6,7 +6,10 @@ use ratatui::crossterm::terminal::{
     EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode, enable_raw_mode,
 };
 use std::error::Error;
-use std::io;
+use std::{io, thread};
+use std::time::Duration;
+use tokio::time::interval;
+use tokio::sync::mpsc;
 use crate::app::{App, Screen};
 use crate::ui::ui;
 
@@ -41,11 +44,28 @@ fn main() -> Result<(), Box<dyn Error>> {
 }
 
 fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<bool> {
+    let (tx, mut rx) = mpsc::channel(100);
+
+    let tokio_handle = thread::spawn(move || {
+        let rt = tokio::runtime::Builder::new_multi_thread()
+            .enable_all()
+            .build()
+            .unwrap();
+        rt.block_on(background_task(tx));
+    });
 
     loop {
         // The ui function will the frame and draw to it
         terminal.draw(|f| ui(f, app))?;
 
+        if let Ok(millis_elapsed) = rx.try_recv() {
+            app.current_millis = millis_elapsed;
+        }
+
+        if !event::poll(Duration::from_millis(50))? {
+            continue;
+        }
+        
         if let Event::Key(key) = event::read()? {
             // Skip all key release events.
             if key.kind == event::KeyEventKind::Release {
@@ -65,6 +85,7 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
                     KeyCode::Char(char) => {
                         if !app.game_active {
                             app.game_active = true;
+                            app.millis_at_current_game_start = app.current_millis;
                         }
                         app.current_user_input.push(char);
                     }
@@ -77,6 +98,19 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
                 }
             _ => {}
             }
+        }
+    }
+}
+
+async fn background_task(tx: mpsc::Sender<u64>) {
+    let mut interval = interval(Duration::from_millis(50));
+    let mut millis_elapsed = 0u64;
+    loop {
+        interval.tick().await;
+        millis_elapsed += 50;
+        // If the receiver is dropped, the task will gracefully exit.
+        if tx.send(millis_elapsed).await.is_err() {
+            break;
         }
     }
 }

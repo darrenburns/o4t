@@ -9,7 +9,7 @@ pub enum Screen {
 }
 
 const NUMBER_OF_WORDS_TO_PICK: usize = 500;
-const DEFAULT_GAME_LENGTH: Duration = Duration::from_secs(30);
+const DEFAULT_GAME_LENGTH: Duration = Duration::from_secs(4);
 
 #[derive(Debug, PartialOrd, PartialEq)]
 pub struct WordAttempt {
@@ -40,6 +40,8 @@ pub struct App {
     pub current_screen: Screen,
     pub time_remaining: Duration,
     pub game_active: bool,
+    pub millis_at_current_game_start: u64,
+    pub current_millis: u64,
 }
 
 impl App {
@@ -51,11 +53,18 @@ impl App {
             current_screen: Screen::Game,
             time_remaining: DEFAULT_GAME_LENGTH,
             game_active: false,
+            millis_at_current_game_start: 0,
+            current_millis: 0,
         }
     }
 
     pub fn start_game(&mut self) {
         self.game_active = true;
+    }
+
+    pub fn game_time_remaining(&self) -> u64 {
+        let game_time_elapsed = if self.game_active {self.current_millis - self.millis_at_current_game_start} else { 0 };
+        (DEFAULT_GAME_LENGTH.as_millis() as u64).saturating_sub(game_time_elapsed)
     }
 }
 
