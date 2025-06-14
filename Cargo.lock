@@ -374,6 +374,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "o4t"
+version = "0.1.0"
+dependencies = [
+ "color-eyre",
+ "rand",
+ "ratatui",
+ "tokio",
+]
+
+[[package]]
 name = "object"
 version = "0.36.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -519,16 +529,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "928fca9cf2aa042393a8325b9ead81d2f0df4cb12e1e24cef072922ccd99c5af"
 dependencies = [
  "bitflags",
-]
-
-[[package]]
-name = "rust-typing-challenge"
-version = "0.1.0"
-dependencies = [
- "color-eyre",
- "rand",
- "ratatui",
- "tokio",
 ]
 
 [[package]]
