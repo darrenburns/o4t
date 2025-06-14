@@ -1,3 +1,4 @@
+use std::ops::Add;
 use crate::app::App;
 use color_eyre::owo_colors::OwoColorize;
 use ratatui::Frame;
@@ -62,9 +63,17 @@ pub fn ui(frame: &mut Frame, app: &App) {
                 word.to_string(),
                 true,
             );
+            if word.len() == app.current_user_input.len() {
+                words_text.push_span(Span::styled(" ", Style::default().add_modifier(Modifier::UNDERLINED)))
+            } else {
+                words_text.push_span(Span::default().content(" "));
+            }
         } else if user_attempt.is_empty() {
             // It's not the current word, and there's no attempt yet, basic rendering.
             words_text.push_span(Span::styled(word, char_style));
+            if index != words.len() - 1 {
+                words_text.push_span(Span::default().content(" "));
+            }
         } else {
             // It's not the current word, but we have attempted it - render the word attempt.
             build_styled_word(
@@ -74,11 +83,11 @@ pub fn ui(frame: &mut Frame, app: &App) {
                 word.to_string(),
                 false,
             );
+            if index != words.len() - 1 {
+                words_text.push_span(Span::default().content(" "));
+            }
         }
 
-        if index != words.len() - 1 {
-            words_text.push_span(Span::default().content(" "));
-        }
     }
 
     // The body has 2 rows - a single cell height row for the timer, and 5 rows for the text to type
