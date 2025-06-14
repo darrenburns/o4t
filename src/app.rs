@@ -35,6 +35,8 @@ impl WordAttempt {
 pub struct App {
     // the current input the user has typed while trying to type words[0]
     pub current_user_input: String,
+    // The index of the word in words that is being attempted by the user
+    pub current_word_offset: usize,
     // contains the history of words for the current session.
     // the current word the user is being asked to type is words[0]
     pub words: Vec<WordAttempt>,
@@ -47,6 +49,7 @@ impl App {
     pub fn new() -> App {
         App {
             current_user_input: String::new(),
+            current_word_offset: 0,
             words: generate_words(),
             current_screen: Screen::Game,
             time_remaining: DEFAULT_GAME_LENGTH,

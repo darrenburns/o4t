@@ -1,8 +1,8 @@
 use crate::app::App;
 use ratatui::layout::{Constraint, Direction, Flex, Layout, Rect};
 use ratatui::style::Color::Yellow;
-use ratatui::style::{Color, Style};
-use ratatui::text::Text;
+use ratatui::style::{Color, Modifier, Style};
+use ratatui::text::{Span, Text};
 use ratatui::widgets::{Block, Padding, Paragraph, Wrap};
 use ratatui::Frame;
 
@@ -29,18 +29,30 @@ pub fn ui(frame: &mut Frame, app: &App) {
         "tigertype 🐯",
         Style::default().fg(Yellow),
     ))
-    .block(header_block);
+        .block(header_block);
     frame.render_widget(title, sections[0]);
 
     // Body text containing the words to show the user that they must type.
     let words = app.words.iter().map(|word_attempt| word_attempt.word.clone()).collect::<Vec<_>>();
-    let words_paragraph = Paragraph::new(Text::styled(
-        words.join(" "),
-        Style::default().fg(Color::Gray),
-    ))
+    let mut words_text = Text::default();
+    for (index, word) in words.iter().enumerate() {
+        let mut style;
+        if app.current_word_offset == index {
+            style = Style::default().fg(Color::Gray).add_modifier(Modifier::BOLD);
+        } else {
+            style = Style::default().fg(Color::Gray);
+        }
+        style = style.add_modifier(Modifier::DIM);
+        words_text.push_span(Span::styled(word, style));
+        if index != words.len() - 1 {
+            words_text.push_span(Span::default().content(" "));
+        }
+    }
+
+    let words_paragraph = Paragraph::new(words_text)
         .wrap(Wrap::default())
         .block(Block::default()
-        .padding(Padding::horizontal(8)))
+            .padding(Padding::horizontal(8)))
         .scroll((0, 0));  // TODO - scroll as we move through the paragraph
     let body_text_render_area = center(
         sections[1],
