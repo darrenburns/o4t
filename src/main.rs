@@ -66,8 +66,6 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
             continue;
         }
         
-        
-        
         if let Event::Key(key) = event::read()? {
             // Skip all key release events.
             if key.kind == event::KeyEventKind::Release {

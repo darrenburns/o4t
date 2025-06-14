@@ -144,6 +144,8 @@ fn build_styled_word(
                 cursor_char.to_string(),
                 char_style.add_modifier(Modifier::UNDERLINED),
             ));
+        } else {
+            words_text.push_span(Span::styled(cursor_char.to_string(), char_style));
         }
     }
     words_text.push_span(Span::styled(
