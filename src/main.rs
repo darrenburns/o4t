@@ -56,23 +56,26 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
         rt.block_on(background_task(tx));
     });
     terminal.clear()?;
-    
+
     let mut last_frame_instant = Instant::now();
     app.load_words_effect = load_words_effect();
     loop {
         app.last_tick_duration = last_frame_instant.elapsed().into();
         last_frame_instant = Instant::now();
-        
+
         // The ui function will the frame and draw to it
         terminal.draw(|f| ui(f, app))?;
 
         if let Ok(millis_elapsed) = rx.try_recv() {
             app.current_millis = millis_elapsed;
-            app.refresh_internal_score();
+            if app.game_active {
+                app.refresh_internal_score();
+            }
             if app.game_time_remaining_millis() == 0 {
-                app.game_active = false;
-                app.current_screen = Screen::Results;
                 app.load_results_screen_effect = load_results_screen_effect();
+                app.game_active = false;
+                app.compute_postgame_stats();
+                app.current_screen = Screen::Results;
             }
         }
 
@@ -91,6 +94,9 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
                 KeyCode::Esc => {
                     app.current_screen = Screen::Exiting;  // TODO
                     return Ok(true);
+                }
+                KeyCode::Tab => {
+                    app.reset_game()
                 }
                 _ => {}
             }

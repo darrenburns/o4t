@@ -1,12 +1,11 @@
 use crate::words;
 use rand::seq::IteratorRandom;
-use std::time::Duration;
-use ratatui::crossterm::style::Colored::BackgroundColor;
 use ratatui::style::Color;
-use tachyonfx::{fx, Effect, Motion};
-use tachyonfx::CellFilter::BgColor;
-use tachyonfx::Interpolation::{Linear, QuadOut, SineOut};
-use tachyonfx::fx::{delay, explode, fade_from_fg, fade_to, fade_to_fg, Glitch};
+use std::cmp::max;
+use std::time::Duration;
+use tachyonfx::fx::{delay, fade_to_fg};
+use tachyonfx::Interpolation::{Linear, QuadOut};
+use tachyonfx::{fx, Effect};
 
 pub enum Screen {
     Game,
@@ -45,6 +44,11 @@ impl WordAttempt {
     }
 }
 
+#[derive(Debug, Default)]
+pub struct PostGameStats {
+    pub best_word_streak: usize
+}
+
 // Holds the state for the app
 pub struct App {
     // the current input the user has typed while trying to type words[0]
@@ -60,6 +64,7 @@ pub struct App {
     pub millis_at_current_game_start: u64,
     pub current_millis: u64,
     pub current_score: Score,
+    pub post_game_stats: PostGameStats,
     pub score_effect: Effect,
     pub load_results_screen_effect: Effect,
     pub load_words_effect: Effect,
@@ -71,11 +76,11 @@ pub fn score_effect() -> Effect {
 }
 
 pub fn load_words_effect() -> Effect {
-    fx::coalesce((80, QuadOut))
+    fx::coalesce((180, QuadOut))
 }
 
 pub fn load_results_screen_effect() -> Effect {
-    fx::coalesce((80, QuadOut))
+    fx::coalesce((180, QuadOut))
 }
 
 impl App {
@@ -90,15 +95,16 @@ impl App {
             millis_at_current_game_start: 0,
             current_millis: 0,
             current_score: Score::default(),
+            post_game_stats: PostGameStats::default(),
             score_effect: score_effect(),
             load_words_effect: load_words_effect(),
-            load_results_screen_effect: load_results_screen_effect(),   
+            load_results_screen_effect: load_results_screen_effect(),
             last_tick_duration: Duration::ZERO,
         }
     }
 
-    pub fn start_game(&mut self) {
-        self.game_active = true;
+    pub fn reset_game(&mut self) {
+        *self = App::new();
     }
 
     pub fn game_time_elapsed_millis(&self) -> u64 {
@@ -111,6 +117,19 @@ impl App {
 
     pub fn game_time_remaining_millis(&self) -> u64 {
         (DEFAULT_GAME_LENGTH.as_millis() as u64).saturating_sub(self.game_time_elapsed_millis())
+    }
+
+    pub fn compute_postgame_stats(&mut self) {
+        let mut best_word_combo = 0;
+        let mut current_streak = 0;
+        for attempt in &self.words {
+            if attempt.user_attempt == attempt.word {
+                current_streak += 1;
+            } else {
+                current_streak = 0;
+            }
+            best_word_combo = max(best_word_combo, current_streak);
+        }
     }
 
     pub fn refresh_internal_score(&mut self) {

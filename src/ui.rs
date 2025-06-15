@@ -1,6 +1,6 @@
-use std::fmt::format;
 use crate::app::{App, Screen};
 use ratatui::layout::Alignment;
+use ratatui::prelude::Line;
 use ratatui::{
     layout::Constraint,
     layout::Constraint::{Length, Min},
@@ -16,7 +16,7 @@ use ratatui::{
     Frame,
 };
 use std::rc::Rc;
-use tachyonfx::{Duration, EffectRenderer, Shader};
+use tachyonfx::{EffectRenderer, Shader};
 
 pub fn ui(screen_frame: &mut Frame, app: &mut App) {
 
@@ -117,7 +117,7 @@ fn build_game_screen(screen_frame: &mut Frame, app: &mut App) {
         .wrap(Wrap::default())
         .block(Block::default().padding(Padding::horizontal(8)))
         .scroll((0, 0)); // TODO - scroll as we move through the paragraph
-    
+
     let launch_effect = &mut app.load_words_effect;
     screen_frame.render_widget(words_paragraph, centered_body_sections[1]);
     if launch_effect.running() {
@@ -125,7 +125,7 @@ fn build_game_screen(screen_frame: &mut Frame, app: &mut App) {
     }
 
     // Footer
-    build_footer(screen_frame, screen_sections, app, true);
+    build_footer(screen_frame, screen_sections, app, true, true);
 }
 
 fn build_header() -> Paragraph<'static> {
@@ -155,39 +155,64 @@ fn build_results_screen(screen_frame: &mut Frame, app: &mut App) {
         .margin(1)
         .split(screen_frame.area());
 
-    let score = &app.current_score;
-    let score_screen_summary_text = format!("wpm: {}\ncpm: {}", score.words_per_minute, score.chars_per_minute);
-    let results = Paragraph::new(score_screen_summary_text);
-
     screen_frame.render_widget(build_header(), screen_sections[0]);
-    
-    let load_effect = &mut app.load_results_screen_effect;
+
+    // Score screen body
+    let score = &app.current_score;
+    // let score_screen_summary_text = format!("wpm: {}\ncpm: {}", score.words_per_minute, score.chars_per_minute);
+    let score_block = Block::default().padding(Padding::proportional(2));
+
+    let key_style = Style::default().add_modifier(Modifier::DIM);
+    let value_style = Style::default().fg(Yellow).add_modifier(Modifier::BOLD);
+    let score_facts = Text::from(vec![
+        Line::from(format!("{:.0} ", score.words_per_minute)).style(value_style),
+        Line::from("words per minute").style(key_style),
+        Line::from(""),
+        Line::from(format!("{:.0}% ", score.accuracy * 100.)).style(value_style),
+        Line::from("accuracy ").style(key_style),
+        Line::from(""),
+        Line::from(format!("{} ", score.num_words)).style(value_style),
+        Line::from("words passed ").style(key_style),
+        Line::from(""),
+        Line::from(format!("{} ", score.character_hits)).style(value_style),
+        Line::from("character hits ").style(key_style),
+        Line::from(""),
+        Line::from(format!("{} ", score.character_misses)).style(value_style),
+        Line::from("character misses ").style(key_style),
+    ]);
+    let results = Paragraph::new(score_facts).block(score_block);
+
     screen_frame.render_widget(results, screen_sections[1]);
+
+    let load_effect = &mut app.load_results_screen_effect;
     if load_effect.running() {
         screen_frame.render_effect(load_effect, screen_sections[1], app.last_tick_duration.into());
     }
-    build_footer(screen_frame, screen_sections, app, false);
+    build_footer(screen_frame, screen_sections, app, false, true);
 }
 
-fn build_footer(screen_frame: &mut Frame, sections: Rc<[Rect]>, app: &mut App, show_scoring: bool) {
+fn build_footer(screen_frame: &mut Frame, sections: Rc<[Rect]>, app: &mut App, show_scoring: bool, show_reset: bool) {
     let footer_sections: [Rect; 2] =
         Layout::horizontal([Constraint::Fill(1), Min(10)])
             .flex(SpaceBetween)
             .areas(sections[2]);
 
     let keys_block = Block::default().padding(Padding::left(1));
-    let mut keys_text = Text::styled(
-        "ESC",
-        Style::default().fg(Yellow).add_modifier(Modifier::BOLD),
-    );
-    keys_text.push_span(Span::styled(
-        " quit",
-        Style::default().remove_modifier(Modifier::BOLD),
-    ));
-    let keys = Paragraph::new(keys_text).block(keys_block);
+    
+    let key_style = Style::default().fg(Yellow).add_modifier(Modifier::BOLD);
+    let value_style = Style::default().add_modifier(Modifier::DIM);
+    let mut keys = Line::from(vec![
+        Span::styled("ESC ", key_style),
+        Span::styled("quit  ", value_style),
+    ]);
+    if show_reset {
+        keys.push_span(Span::styled("TAB ", key_style));
+        keys.push_span(Span::styled("restart ", value_style));
+    }
+    let keys_paragraph = Paragraph::new(keys).block(keys_block);
 
     let footer_left_corner = footer_sections[0];
-    screen_frame.render_widget(keys, footer_left_corner);
+    screen_frame.render_widget(keys_paragraph, footer_left_corner);
 
     let footer_right_corner = footer_sections[1];
     if show_scoring {
