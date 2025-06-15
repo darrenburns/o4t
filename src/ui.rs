@@ -16,6 +16,7 @@ use ratatui::{
     Frame,
 };
 use std::rc::Rc;
+use ratatui::layout::Constraint::Fill;
 use tachyonfx::{EffectRenderer, Shader};
 
 pub fn ui(screen_frame: &mut Frame, app: &mut App) {
@@ -149,7 +150,7 @@ fn build_results_screen(screen_frame: &mut Frame, app: &mut App) {
         .direction(Direction::Vertical)
         .constraints([
             Length(1), // Header
-            Min(4),    // Body
+            Min(10),    // Body
             Length(1), // Footer
         ])
         .margin(1)
@@ -159,9 +160,7 @@ fn build_results_screen(screen_frame: &mut Frame, app: &mut App) {
 
     // Score screen body
     let score = &app.current_score;
-    // let score_screen_summary_text = format!("wpm: {}\ncpm: {}", score.words_per_minute, score.chars_per_minute);
     let score_block = Block::default().padding(Padding::proportional(2));
-
     let key_style = Style::default().add_modifier(Modifier::DIM);
     let value_style = Style::default().fg(Yellow).add_modifier(Modifier::BOLD);
     let score_facts = Text::from(vec![
@@ -182,7 +181,7 @@ fn build_results_screen(screen_frame: &mut Frame, app: &mut App) {
     ]);
     let results = Paragraph::new(score_facts).block(score_block);
 
-    screen_frame.render_widget(results, screen_sections[1]);
+    screen_frame.render_widget(results, center_vertical(screen_sections[1], 20));
 
     let load_effect = &mut app.load_results_screen_effect;
     if load_effect.running() {
@@ -198,7 +197,7 @@ fn build_footer(screen_frame: &mut Frame, sections: Rc<[Rect]>, app: &mut App, s
             .areas(sections[2]);
 
     let keys_block = Block::default().padding(Padding::left(1));
-    
+
     let key_style = Style::default().fg(Yellow).add_modifier(Modifier::BOLD);
     let value_style = Style::default().add_modifier(Modifier::DIM);
     let mut keys = Line::from(vec![
@@ -233,9 +232,6 @@ fn build_footer(screen_frame: &mut Frame, sections: Rc<[Rect]>, app: &mut App, s
             .alignment(Alignment::Right)
             .block(score_block);
 
-        if app.score_effect.running() {
-            screen_frame.render_effect(&mut app.score_effect, footer_right_corner, app.last_tick_duration.into());
-        }
         screen_frame.render_widget(score_paragraph, footer_right_corner);
     }
 
@@ -284,5 +280,12 @@ fn center(area: Rect, horizontal: Constraint, vertical: Constraint) -> Rect {
         .flex(Flex::Center)
         .areas(area);
     let [area] = Layout::vertical([vertical]).flex(Flex::Center).areas(area);
+    area
+}
+
+fn center_vertical(area: Rect, height: u16) -> Rect {
+    let [area] = Layout::vertical([Length(height)])
+        .flex(Flex::Center)
+        .areas(area);
     area
 }

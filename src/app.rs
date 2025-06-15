@@ -3,9 +3,9 @@ use rand::seq::IteratorRandom;
 use ratatui::style::Color;
 use std::cmp::max;
 use std::time::Duration;
-use tachyonfx::fx::{delay, fade_to_fg};
+use tachyonfx::fx::{delay, explode, fade_to_fg};
 use tachyonfx::Interpolation::{Linear, QuadOut};
-use tachyonfx::{fx, Effect};
+use tachyonfx::{fx, ColorSpace, Effect};
 
 pub enum Screen {
     Game,
@@ -15,7 +15,7 @@ pub enum Screen {
 }
 
 const NUMBER_OF_WORDS_TO_PICK: usize = 500;
-const DEFAULT_GAME_LENGTH: Duration = Duration::from_secs(4);
+const DEFAULT_GAME_LENGTH: Duration = Duration::from_secs(8);
 
 #[derive(Debug, PartialOrd, PartialEq)]
 pub struct WordAttempt {
@@ -65,14 +65,9 @@ pub struct App {
     pub current_millis: u64,
     pub current_score: Score,
     pub post_game_stats: PostGameStats,
-    pub score_effect: Effect,
     pub load_results_screen_effect: Effect,
     pub load_words_effect: Effect,
     pub last_tick_duration: Duration,
-}
-
-pub fn score_effect() -> Effect {
-    delay(1, fade_to_fg(Color::Yellow, (400, Linear)))
 }
 
 pub fn load_words_effect() -> Effect {
@@ -96,7 +91,6 @@ impl App {
             current_millis: 0,
             current_score: Score::default(),
             post_game_stats: PostGameStats::default(),
-            score_effect: score_effect(),
             load_words_effect: load_words_effect(),
             load_results_screen_effect: load_results_screen_effect(),
             last_tick_duration: Duration::ZERO,
@@ -104,6 +98,7 @@ impl App {
     }
 
     pub fn reset_game(&mut self) {
+
         *self = App::new();
     }
 

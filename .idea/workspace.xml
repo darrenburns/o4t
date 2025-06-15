@@ -11,7 +11,7 @@
     </cargoProject>
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="e5189378-0d9f-4dd8-9f90-573d5292428d" name="Changes" comment="results screen, loading animations">
+    <list default="true" id="e5189378-0d9f-4dd8-9f90-573d5292428d" name="Changes" comment="reset game">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/app.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/app.rs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/main.rs" afterDir="false" />
@@ -104,7 +104,7 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1749913446826</updated>
-      <workItem from="1749913447859" duration="17453000" />
+      <workItem from="1749913447859" duration="19735000" />
     </task>
     <task id="LOCAL-00001" summary="results screen, loading animations">
       <option name="closed" value="true" />
@@ -114,7 +114,15 @@
       <option name="project" value="LOCAL" />
       <updated>1749944470634</updated>
     </task>
-    <option name="localTasksCounter" value="2" />
+    <task id="LOCAL-00002" summary="reset game">
+      <option name="closed" value="true" />
+      <created>1749949075342</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1749949075342</updated>
+    </task>
+    <option name="localTasksCounter" value="3" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -122,6 +130,7 @@
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="results screen, loading animations" />
-    <option name="LAST_COMMIT_MESSAGE" value="results screen, loading animations" />
+    <MESSAGE value="reset game" />
+    <option name="LAST_COMMIT_MESSAGE" value="reset game" />
   </component>
 </project>

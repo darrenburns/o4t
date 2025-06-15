@@ -1,4 +1,4 @@
-use crate::app::{load_results_screen_effect, load_words_effect, score_effect, App, Screen};
+use crate::app::{load_results_screen_effect, load_words_effect, App, Screen};
 use crate::ui::ui;
 use ratatui::backend::{Backend, CrosstermBackend};
 use ratatui::crossterm::event::{DisableMouseCapture, EnableMouseCapture, Event, KeyCode};
@@ -117,7 +117,6 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
                             app.millis_at_current_game_start = app.current_millis;
                         }
                         app.current_user_input.push(char);
-                        app.score_effect = score_effect();
                     }
                     KeyCode::Backspace if app.game_active => {
                         let _ = app.current_user_input.pop();
