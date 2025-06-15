@@ -63,6 +63,7 @@ fn build_game_screen(screen_frame: &mut Frame, app: &mut App) {
                 app.current_user_input.to_string(),
                 word.to_string(),
                 true,
+                false,
             );
             if app.current_user_input.len() >= word.len() {
                 words_text.push_span(Span::styled(
@@ -86,6 +87,7 @@ fn build_game_screen(screen_frame: &mut Frame, app: &mut App) {
                 user_attempt.to_string(),
                 word.to_string(),
                 false,
+                true,
             );
             if index != words.len() - 1 {
                 words_text.push_span(Span::default().content(" "));
@@ -262,6 +264,7 @@ fn build_styled_word(
     user_attempt: String,
     expected_word: String,
     is_current_word: bool,
+    is_past_word: bool,
 ) {
     let zipped_chars = expected_word
         .chars()
@@ -280,6 +283,11 @@ fn build_styled_word(
 
 
     // Render text we expected the user to type that they didn't type
+    let mut missed_char_style = char_style;
+    if is_past_word {
+        missed_char_style = missed_char_style.fg(Red).add_modifier(Modifier::UNDERLINED);
+    }
+    
     let mut missed_chars_iter = expected_word.chars().skip(min_len);
     if let Some(cursor_char) = missed_chars_iter.next() {
         if is_current_word {
@@ -288,12 +296,13 @@ fn build_styled_word(
                 char_style.add_modifier(Modifier::UNDERLINED),
             ));
         } else {
-            words_text.push_span(Span::styled(cursor_char.to_string(), char_style));
+            words_text.push_span(Span::styled(cursor_char.to_string(), missed_char_style));
         }
     }
+    
     words_text.push_span(Span::styled(
         missed_chars_iter.collect::<String>(),
-        char_style,
+        missed_char_style,
     ));
 
     // Render extra chars that the user typed beyond the length of the word
