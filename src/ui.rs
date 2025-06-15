@@ -1,7 +1,9 @@
 use crate::app::{App, Screen};
 use ratatui::layout::Alignment;
+use ratatui::layout::Constraint::Fill;
 use ratatui::prelude::Line;
 use ratatui::{
+    Frame,
     layout::Constraint,
     layout::Constraint::{Length, Min},
     layout::Direction,
@@ -13,14 +15,11 @@ use ratatui::{
     style::{Color, Modifier, Style},
     text::{Span, Text},
     widgets::{Block, Padding, Paragraph, Wrap},
-    Frame,
 };
 use std::rc::Rc;
-use ratatui::layout::Constraint::Fill;
 use tachyonfx::{EffectRenderer, Shader};
 
 pub fn ui(screen_frame: &mut Frame, app: &mut App) {
-
     match app.current_screen {
         Screen::Game => build_game_screen(screen_frame, app),
         Screen::Results => build_results_screen(screen_frame, app),
@@ -65,7 +64,7 @@ fn build_game_screen(screen_frame: &mut Frame, app: &mut App) {
                 word.to_string(),
                 true,
             );
-            if word.len() == app.current_user_input.len() {
+            if app.current_user_input.len() >= word.len() {
                 words_text.push_span(Span::styled(
                     " ",
                     Style::default().add_modifier(Modifier::UNDERLINED),
@@ -109,7 +108,7 @@ fn build_game_screen(screen_frame: &mut Frame, app: &mut App) {
             game_time_remaining_secs.to_string() + " ",
             Style::default().fg(Yellow).add_modifier(Modifier::BOLD),
         ))
-            .block(Block::default().padding(Padding::horizontal(8)));
+        .block(Block::default().padding(Padding::horizontal(8)));
         screen_frame.render_widget(game_timer, centered_body_sections[0]);
     }
 
@@ -122,7 +121,11 @@ fn build_game_screen(screen_frame: &mut Frame, app: &mut App) {
     let launch_effect = &mut app.load_words_effect;
     screen_frame.render_widget(words_paragraph, centered_body_sections[1]);
     if launch_effect.running() {
-        screen_frame.render_effect(launch_effect, centered_body_sections[1], app.last_tick_duration.into());
+        screen_frame.render_effect(
+            launch_effect,
+            centered_body_sections[1],
+            app.last_tick_duration.into(),
+        );
     }
 
     // Footer
@@ -150,7 +153,7 @@ fn build_results_screen(screen_frame: &mut Frame, app: &mut App) {
         .direction(Direction::Vertical)
         .constraints([
             Length(1), // Header
-            Min(10),    // Body
+            Min(10),   // Body
             Length(1), // Footer
         ])
         .margin(1)
@@ -185,16 +188,25 @@ fn build_results_screen(screen_frame: &mut Frame, app: &mut App) {
 
     let load_effect = &mut app.load_results_screen_effect;
     if load_effect.running() {
-        screen_frame.render_effect(load_effect, screen_sections[1], app.last_tick_duration.into());
+        screen_frame.render_effect(
+            load_effect,
+            screen_sections[1],
+            app.last_tick_duration.into(),
+        );
     }
     build_footer(screen_frame, screen_sections, app, false, true);
 }
 
-fn build_footer(screen_frame: &mut Frame, sections: Rc<[Rect]>, app: &mut App, show_scoring: bool, show_reset: bool) {
-    let footer_sections: [Rect; 2] =
-        Layout::horizontal([Constraint::Fill(1), Min(10)])
-            .flex(SpaceBetween)
-            .areas(sections[2]);
+fn build_footer(
+    screen_frame: &mut Frame,
+    sections: Rc<[Rect]>,
+    app: &mut App,
+    show_scoring: bool,
+    show_reset: bool,
+) {
+    let footer_sections: [Rect; 2] = Layout::horizontal([Constraint::Fill(1), Min(10)])
+        .flex(SpaceBetween)
+        .areas(sections[2]);
 
     let keys_block = Block::default().padding(Padding::left(1));
 
@@ -218,8 +230,16 @@ fn build_footer(screen_frame: &mut Frame, sections: Rc<[Rect]>, app: &mut App, s
         let empty_score_placeholder = "-";
         let score = &app.current_score;
         let score_block = Block::default().padding(Padding::right(1));
-        let accuracy = if app.game_active && !score.accuracy.is_nan() { format!("{:.0}%", score.accuracy * 100.0) } else { empty_score_placeholder.to_string() };
-        let wpm = if app.game_active && !score.words_per_minute.is_nan() { format!("{:.0}", score.words_per_minute) } else { empty_score_placeholder.to_string() };
+        let accuracy = if app.game_active && !score.accuracy.is_nan() {
+            format!("{:.0}%", score.accuracy * 100.0)
+        } else {
+            empty_score_placeholder.to_string()
+        };
+        let wpm = if app.game_active && !score.words_per_minute.is_nan() {
+            format!("{:.0}", score.words_per_minute)
+        } else {
+            empty_score_placeholder.to_string()
+        };
         let score_string = format!(
             "{}/{} · acc: {} · wpm: {}",
             score.character_hits.to_string(),
@@ -234,7 +254,6 @@ fn build_footer(screen_frame: &mut Frame, sections: Rc<[Rect]>, app: &mut App, s
 
         screen_frame.render_widget(score_paragraph, footer_right_corner);
     }
-
 }
 
 fn build_styled_word(
@@ -248,7 +267,7 @@ fn build_styled_word(
         .chars()
         .zip(user_attempt.chars())
         .collect::<Vec<_>>();
-    let n = zipped_chars.len();
+    let min_len = zipped_chars.len();
     for (expected_char, user_char) in zipped_chars {
         let mut style = char_style;
         if user_char == expected_char {
@@ -258,8 +277,11 @@ fn build_styled_word(
             words_text.push_span(Span::styled(expected_char.to_string(), char_style.fg(Red)));
         }
     }
-    let mut remaining_chars_iter = expected_word.chars().skip(n);
-    if let Some(cursor_char) = remaining_chars_iter.next() {
+
+
+    // Render text we expected the user to type that they didn't type
+    let mut missed_chars_iter = expected_word.chars().skip(min_len);
+    if let Some(cursor_char) = missed_chars_iter.next() {
         if is_current_word {
             words_text.push_span(Span::styled(
                 cursor_char.to_string(),
@@ -270,9 +292,15 @@ fn build_styled_word(
         }
     }
     words_text.push_span(Span::styled(
-        remaining_chars_iter.collect::<String>(),
+        missed_chars_iter.collect::<String>(),
         char_style,
     ));
+
+    // Render extra chars that the user typed beyond the length of the word
+    let extra_chars_iter = user_attempt.chars().skip(min_len);
+    words_text.push_span(Span::styled(extra_chars_iter.collect::<String>(), char_style.fg(Red).add_modifier(Modifier::CROSSED_OUT)));
+
+
 }
 
 fn center(area: Rect, horizontal: Constraint, vertical: Constraint) -> Rect {
