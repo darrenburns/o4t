@@ -119,7 +119,17 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
                         app.current_user_input.push(char);
                     }
                     KeyCode::Backspace if app.game_active => {
-                        let _ = app.current_user_input.pop();
+                        match app.current_user_input.pop() { 
+                            Some(_) => {}
+                            None => {
+                                // Go back into the previous word if possible.
+                                if app.current_word_offset != 0 {
+                                    app.current_word_offset -= 1;
+                                    app.current_user_input = app.words[app.current_word_offset].user_attempt.clone();
+                                }
+                            }
+                            
+                        }
                     }
                     _ => {}
                 }

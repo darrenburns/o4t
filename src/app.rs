@@ -157,7 +157,7 @@ impl App {
 
         // Compute accuracy based on character hits and misses
         let num_chars: u16 = character_hits.saturating_add(character_misses);
-        let accuracy = character_hits as f32 / num_chars as f32;
+        let accuracy = character_hits as f32 / max(1, num_chars) as f32;
 
         // Chars and words per minute
         let minutes_elapsed = (self.game_time_elapsed_millis() as f32) / 1000. / 60.;

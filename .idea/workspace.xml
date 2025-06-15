@@ -11,11 +11,10 @@
     </cargoProject>
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="e5189378-0d9f-4dd8-9f90-573d5292428d" name="Changes" comment="reset game">
+    <list default="true" id="e5189378-0d9f-4dd8-9f90-573d5292428d" name="Changes" comment="results">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/app.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/app.rs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/main.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ui.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/ui.rs" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -104,7 +103,7 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1749913446826</updated>
-      <workItem from="1749913447859" duration="19735000" />
+      <workItem from="1749913447859" duration="20041000" />
     </task>
     <task id="LOCAL-00001" summary="results screen, loading animations">
       <option name="closed" value="true" />
@@ -122,7 +121,15 @@
       <option name="project" value="LOCAL" />
       <updated>1749949075342</updated>
     </task>
-    <option name="localTasksCounter" value="3" />
+    <task id="LOCAL-00003" summary="results">
+      <option name="closed" value="true" />
+      <created>1749951359364</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1749951359364</updated>
+    </task>
+    <option name="localTasksCounter" value="4" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -131,6 +138,7 @@
   <component name="VcsManagerConfiguration">
     <MESSAGE value="results screen, loading animations" />
     <MESSAGE value="reset game" />
-    <option name="LAST_COMMIT_MESSAGE" value="reset game" />
+    <MESSAGE value="results" />
+    <option name="LAST_COMMIT_MESSAGE" value="results" />
   </component>
 </project>
