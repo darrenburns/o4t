@@ -1,7 +1,7 @@
 use crate::app::{App, Screen};
+use ratatui::buffer::Buffer;
 use ratatui::layout::Alignment;
-use ratatui::layout::Constraint::Fill;
-use ratatui::prelude::Line;
+use ratatui::prelude::{Line, Widget};
 use ratatui::{
     Frame,
     layout::Constraint,
@@ -17,7 +17,26 @@ use ratatui::{
     widgets::{Block, Padding, Paragraph, Wrap},
 };
 use std::rc::Rc;
+use ratatui::layout::Flex::{Center, SpaceAround};
 use tachyonfx::{EffectRenderer, Shader};
+
+#[derive(Default, Debug)]
+struct ResultData {
+    pub value: String,
+    pub subtext: String,
+}
+
+impl Widget for ResultData {
+    fn render(self, area: Rect, buf: &mut Buffer) {
+        let key_style = Style::default().add_modifier(Modifier::DIM);
+        let value_style = Style::default().fg(Yellow).add_modifier(Modifier::BOLD);
+        let text = Text::from(vec![
+            Line::styled(self.value, value_style),
+            Line::styled(self.subtext, key_style),
+        ]);
+        text.render(area, buf);
+    }
+}
 
 pub fn ui(screen_frame: &mut Frame, app: &mut App) {
     match app.current_screen {
@@ -166,23 +185,54 @@ fn build_results_screen(screen_frame: &mut Frame, app: &mut App) {
     // Score screen body
     let score = &app.current_score;
     let score_block = Block::default().padding(Padding::proportional(2));
-    let key_style = Style::default().add_modifier(Modifier::DIM);
-    let value_style = Style::default().fg(Yellow).add_modifier(Modifier::BOLD);
+    let score_data = vec![
+        ResultData {
+            value: format!("{:.0} ", score.words_per_minute),
+            subtext: "words per minute".to_string(),
+        },
+        ResultData {
+            value: format!("{:.0}%", score.accuracy * 100.),
+            subtext: "accuracy".to_string(),
+        },
+        ResultData {
+            value: score.num_words.to_string(),
+            subtext: "words".to_string(),
+        },
+        ResultData {
+            value: score.character_hits.to_string(),
+            subtext: "character hits".to_string(),
+        },
+        ResultData {
+            value: score.character_misses.to_string(),
+            subtext: "character misses".to_string(),
+        },
+    ];
+    let constraints = score_data.iter().map(|d| 2).collect::<Vec<_>>();
+    let score_data_areas = Layout::vertical(constraints)
+        .horizontal_margin(8)
+        .flex(Center)
+        .spacing(1)
+        .split(screen_sections[1]);
+
+    for (score_data, area) in score_data.into_iter().zip(score_data_areas.iter()) {
+        screen_frame.render_widget(score_data, *area);
+    }
+
     let score_facts = Text::from(vec![
-        Line::from(format!("{:.0} ", score.words_per_minute)).style(value_style),
-        Line::from("words per minute").style(key_style),
-        Line::from(""),
-        Line::from(format!("{:.0}% ", score.accuracy * 100.)).style(value_style),
-        Line::from("accuracy ").style(key_style),
-        Line::from(""),
-        Line::from(format!("{} ", score.num_words)).style(value_style),
-        Line::from("words passed ").style(key_style),
-        Line::from(""),
-        Line::from(format!("{} ", score.character_hits)).style(value_style),
-        Line::from("character hits ").style(key_style),
-        Line::from(""),
-        Line::from(format!("{} ", score.character_misses)).style(value_style),
-        Line::from("character misses ").style(key_style),
+        // Line::from(format!("{:.0} ", score.words_per_minute)).style(value_style),
+        // Line::from("words per minute").style(key_style),
+        // Line::from(""),
+        // Line::from(format!("{:.0}% ", score.accuracy * 100.)).style(value_style),
+        // Line::from("accuracy ").style(key_style),
+        // Line::from(""),
+        // Line::from(format!("{} ", score.num_words)).style(value_style),
+        // Line::from("words passed ").style(key_style),
+        // Line::from(""),
+        // Line::from(format!("{} ", score.character_hits)).style(value_style),
+        // Line::from("character hits ").style(key_style),
+        // Line::from(""),
+        // Line::from(format!("{} ", score.character_misses)).style(value_style),
+        // Line::from("character misses ").style(key_style),
     ]);
     let results = Paragraph::new(score_facts).block(score_block);
 
@@ -281,13 +331,12 @@ fn build_styled_word(
         }
     }
 
-
     // Render text we expected the user to type that they didn't type
     let mut missed_char_style = char_style;
     if is_past_word {
         missed_char_style = missed_char_style.fg(Red).add_modifier(Modifier::UNDERLINED);
     }
-    
+
     let mut missed_chars_iter = expected_word.chars().skip(min_len);
     if let Some(cursor_char) = missed_chars_iter.next() {
         if is_current_word {
@@ -299,7 +348,7 @@ fn build_styled_word(
             words_text.push_span(Span::styled(cursor_char.to_string(), missed_char_style));
         }
     }
-    
+
     words_text.push_span(Span::styled(
         missed_chars_iter.collect::<String>(),
         missed_char_style,
@@ -307,9 +356,10 @@ fn build_styled_word(
 
     // Render extra chars that the user typed beyond the length of the word
     let extra_chars_iter = user_attempt.chars().skip(min_len);
-    words_text.push_span(Span::styled(extra_chars_iter.collect::<String>(), char_style.fg(Red).add_modifier(Modifier::CROSSED_OUT)));
-
-
+    words_text.push_span(Span::styled(
+        extra_chars_iter.collect::<String>(),
+        char_style.fg(Red).add_modifier(Modifier::CROSSED_OUT),
+    ));
 }
 
 fn center(area: Rect, horizontal: Constraint, vertical: Constraint) -> Rect {
