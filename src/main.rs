@@ -1,14 +1,14 @@
-use crate::app::{load_results_screen_effect, load_words_effect, App, Screen};
+use crate::app::{App, Screen, load_results_screen_effect, load_words_effect};
 use crate::ui::ui;
+use ratatui::Terminal;
 use ratatui::backend::{Backend, CrosstermBackend};
 use ratatui::crossterm::event::{DisableMouseCapture, EnableMouseCapture, Event, KeyCode};
 use ratatui::crossterm::terminal::{
-    disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen,
+    EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode, enable_raw_mode,
 };
 use ratatui::crossterm::{event, execute};
-use ratatui::Terminal;
 use std::error::Error;
-use std::time::{Instant};
+use std::time::Instant;
 use std::{io, thread};
 use tachyonfx::{Duration, IntoEffect, Shader};
 use tokio::sync::mpsc;
@@ -30,7 +30,11 @@ fn main() -> Result<(), Box<dyn Error>> {
     let res = run_app(&mut terminal, &mut app);
 
     disable_raw_mode()?;
-    execute!(terminal.backend_mut(), LeaveAlternateScreen, DisableMouseCapture)?;
+    execute!(
+        terminal.backend_mut(),
+        LeaveAlternateScreen,
+        DisableMouseCapture
+    )?;
     terminal.show_cursor()?;
 
     if let Ok(do_print) = res {
@@ -43,7 +47,6 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     Ok(())
 }
-
 
 fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<bool> {
     let (tx, mut rx) = mpsc::channel(100);
@@ -82,7 +85,7 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
         if !event::poll(Duration::from_millis(32).into())? {
             continue;
         }
-        
+
         if let Event::Key(key) = event::read()? {
             // Skip all key release events.
             if key.kind == event::KeyEventKind::Release {
@@ -92,12 +95,10 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
             match key.code {
                 // Pressing escape exits.
                 KeyCode::Esc => {
-                    app.current_screen = Screen::Exiting;  // TODO
+                    app.current_screen = Screen::Exiting; // TODO
                     return Ok(true);
                 }
-                KeyCode::Tab => {
-                    app.reset_game()
-                }
+                KeyCode::Tab => app.reset_game(),
                 _ => {}
             }
 
@@ -106,7 +107,8 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
                     // Pressing any character, while the game hasn't started, starts the game
                     KeyCode::Char(' ') => {
                         if !app.current_user_input.is_empty() {
-                            app.words[app.current_word_offset].user_attempt = app.current_user_input.clone();
+                            app.words[app.current_word_offset].user_attempt =
+                                app.current_user_input.clone();
                             app.current_word_offset += 1;
                             app.current_user_input = String::new();
                         }
@@ -119,21 +121,24 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
                         app.current_user_input.push(char);
                     }
                     KeyCode::Backspace if app.game_active => {
-                        match app.current_user_input.pop() { 
+                        match app.current_user_input.pop() {
                             Some(_) => {}
                             None => {
                                 // Go back into the previous word if possible.
-                                if app.current_word_offset != 0 {
+                                if app.current_word_offset != 0
+                                    && app.words[app.current_word_offset - 1].user_attempt
+                                        != app.words[app.current_word_offset - 1].word
+                                {
                                     app.current_word_offset -= 1;
-                                    app.current_user_input = app.words[app.current_word_offset].user_attempt.clone();
+                                    app.current_user_input =
+                                        app.words[app.current_word_offset].user_attempt.clone();
                                 }
                             }
-                            
                         }
                     }
                     _ => {}
-                }
-            _ => {}
+                },
+                _ => {}
             }
         }
     }
