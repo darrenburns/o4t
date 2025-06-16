@@ -129,7 +129,7 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
                         app.current_user_input.push(char);
                     }
                     KeyCode::Backspace if app.game_active => {
-                        if alt {
+                        if ctrl || alt {
                             app.current_user_input = String::new();
                         }
                         match app.current_user_input.pop() {
