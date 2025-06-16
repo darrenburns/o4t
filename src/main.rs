@@ -2,7 +2,7 @@ use crate::app::{App, Screen, load_results_screen_effect, load_words_effect};
 use crate::ui::ui;
 use ratatui::Terminal;
 use ratatui::backend::{Backend, CrosstermBackend};
-use ratatui::crossterm::event::{DisableMouseCapture, EnableMouseCapture, Event, KeyCode};
+use ratatui::crossterm::event::{DisableMouseCapture, EnableMouseCapture, Event, KeyCode, KeyModifiers};
 use ratatui::crossterm::terminal::{
     EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode, enable_raw_mode,
 };
@@ -102,6 +102,9 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
                 _ => {}
             }
 
+            let ctrl = key.modifiers.contains(KeyModifiers::CONTROL);
+            let alt = key.modifiers.contains(KeyModifiers::ALT);
+
             match app.current_screen {
                 Screen::Game => match key.code {
                     // Pressing any character, while the game hasn't started, starts the game
@@ -113,6 +116,11 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
                             app.current_user_input = String::new();
                         }
                     }
+                    KeyCode::Char(char) if !key.modifiers.is_empty() => {
+                        if ctrl && char == 'w' {
+                            app.current_user_input = String::new();
+                        }
+                    }
                     KeyCode::Char(char) => {
                         if !app.game_active {
                             app.game_active = true;
@@ -121,6 +129,9 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
                         app.current_user_input.push(char);
                     }
                     KeyCode::Backspace if app.game_active => {
+                        if alt {
+                            app.current_user_input = String::new();
+                        }
                         match app.current_user_input.pop() {
                             Some(_) => {}
                             None => {

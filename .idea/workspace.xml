@@ -11,8 +11,9 @@
     </cargoProject>
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="e5189378-0d9f-4dd8-9f90-573d5292428d" name="Changes" comment="highlighting missed chars">
+    <list default="true" id="e5189378-0d9f-4dd8-9f90-573d5292428d" name="Changes" comment="rendering result screen as widgets">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/main.rs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/ui.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/ui.rs" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -102,7 +103,7 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1749913446826</updated>
-      <workItem from="1749913447859" duration="28119000" />
+      <workItem from="1749913447859" duration="31404000" />
     </task>
     <task id="LOCAL-00001" summary="results screen, loading animations">
       <option name="closed" value="true" />
@@ -160,7 +161,15 @@
       <option name="project" value="LOCAL" />
       <updated>1749987446472</updated>
     </task>
-    <option name="localTasksCounter" value="8" />
+    <task id="LOCAL-00008" summary="rendering result screen as widgets">
+      <option name="closed" value="true" />
+      <created>1750012944734</created>
+      <option name="number" value="00008" />
+      <option name="presentableId" value="LOCAL-00008" />
+      <option name="project" value="LOCAL" />
+      <updated>1750012944734</updated>
+    </task>
+    <option name="localTasksCounter" value="9" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -174,6 +183,7 @@
     <MESSAGE value="only going back to prev word if its incorrect" />
     <MESSAGE value="show cursor at end of extra chars" />
     <MESSAGE value="highlighting missed chars" />
-    <option name="LAST_COMMIT_MESSAGE" value="highlighting missed chars" />
+    <MESSAGE value="rendering result screen as widgets" />
+    <option name="LAST_COMMIT_MESSAGE" value="rendering result screen as widgets" />
   </component>
 </project>

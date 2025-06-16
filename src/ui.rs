@@ -17,7 +17,7 @@ use ratatui::{
     widgets::{Block, Padding, Paragraph, Wrap},
 };
 use std::rc::Rc;
-use ratatui::layout::Flex::{Center, SpaceAround};
+use ratatui::layout::Flex::Center;
 use tachyonfx::{EffectRenderer, Shader};
 
 #[derive(Default, Debug)]
@@ -49,13 +49,14 @@ pub fn ui(screen_frame: &mut Frame, app: &mut App) {
 
 fn build_game_screen(screen_frame: &mut Frame, app: &mut App) {
     let screen_sections = Layout::default()
+        .horizontal_margin(3)
+        .vertical_margin(1)
         .direction(Direction::Vertical)
         .constraints([
             Length(1), // Header
-            Min(4),    // Body
+            Min(6),    // Body (1 timer row, 5 lines of text)
             Length(1), // Footer
         ])
-        .margin(1)
         .split(screen_frame.area());
 
     // Header
@@ -118,16 +119,20 @@ fn build_game_screen(screen_frame: &mut Frame, app: &mut App) {
     let centered_body = center(
         screen_sections[1],
         Length(screen_frame.area().width),
-        Length(6),
+        Length(6),  // 1 timer row, 5 lines of text
     );
     let centered_body_sections = Layout::vertical([Length(1), Min(5)]).split(centered_body);
 
     // The game timer
     if app.game_active {
         let game_time_remaining_secs = app.game_time_remaining_millis().div_ceil(1000);
+        let mut timer_style = Style::default().fg(Yellow).add_modifier(Modifier::BOLD);
+        if game_time_remaining_secs <= 3 {
+            timer_style = timer_style.add_modifier(Modifier::UNDERLINED);
+        }
         let game_timer = Paragraph::new(Text::styled(
-            game_time_remaining_secs.to_string() + " ",
-            Style::default().fg(Yellow).add_modifier(Modifier::BOLD),
+            game_time_remaining_secs.to_string(),
+            timer_style,
         ))
         .block(Block::default().padding(Padding::horizontal(8)));
         screen_frame.render_widget(game_timer, centered_body_sections[0]);
@@ -171,20 +176,20 @@ fn build_header() -> Paragraph<'static> {
 
 fn build_results_screen(screen_frame: &mut Frame, app: &mut App) {
     let screen_sections = Layout::default()
+        .horizontal_margin(3)
+        .vertical_margin(1)
         .direction(Direction::Vertical)
         .constraints([
             Length(1), // Header
-            Min(10),   // Body
+            Min(2),   // Body
             Length(1), // Footer
         ])
-        .margin(1)
         .split(screen_frame.area());
 
     screen_frame.render_widget(build_header(), screen_sections[0]);
 
     // Score screen body
     let score = &app.current_score;
-    let score_block = Block::default().padding(Padding::proportional(2));
     let score_data = vec![
         ResultData {
             value: format!("{:.0} ", score.words_per_minute),
@@ -196,7 +201,7 @@ fn build_results_screen(screen_frame: &mut Frame, app: &mut App) {
         },
         ResultData {
             value: score.num_words.to_string(),
-            subtext: "words".to_string(),
+            subtext: "words typed correctly".to_string(),
         },
         ResultData {
             value: score.character_hits.to_string(),
@@ -217,26 +222,6 @@ fn build_results_screen(screen_frame: &mut Frame, app: &mut App) {
     for (score_data, area) in score_data.into_iter().zip(score_data_areas.iter()) {
         screen_frame.render_widget(score_data, *area);
     }
-
-    let score_facts = Text::from(vec![
-        // Line::from(format!("{:.0} ", score.words_per_minute)).style(value_style),
-        // Line::from("words per minute").style(key_style),
-        // Line::from(""),
-        // Line::from(format!("{:.0}% ", score.accuracy * 100.)).style(value_style),
-        // Line::from("accuracy ").style(key_style),
-        // Line::from(""),
-        // Line::from(format!("{} ", score.num_words)).style(value_style),
-        // Line::from("words passed ").style(key_style),
-        // Line::from(""),
-        // Line::from(format!("{} ", score.character_hits)).style(value_style),
-        // Line::from("character hits ").style(key_style),
-        // Line::from(""),
-        // Line::from(format!("{} ", score.character_misses)).style(value_style),
-        // Line::from("character misses ").style(key_style),
-    ]);
-    let results = Paragraph::new(score_facts).block(score_block);
-
-    screen_frame.render_widget(results, center_vertical(screen_sections[1], 20));
 
     let load_effect = &mut app.load_results_screen_effect;
     if load_effect.running() {
