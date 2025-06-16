@@ -1,11 +1,9 @@
 use crate::words;
 use rand::seq::IteratorRandom;
-use ratatui::style::Color;
 use std::cmp::max;
 use std::time::Duration;
-use tachyonfx::fx::{delay, explode, fade_to_fg};
-use tachyonfx::Interpolation::{Linear, QuadOut};
-use tachyonfx::{fx, ColorSpace, Effect};
+use tachyonfx::Interpolation::QuadOut;
+use tachyonfx::{fx, Effect};
 
 pub enum Screen {
     Game,
@@ -15,7 +13,7 @@ pub enum Screen {
 }
 
 const NUMBER_OF_WORDS_TO_PICK: usize = 500;
-const DEFAULT_GAME_LENGTH: Duration = Duration::from_secs(8);
+const DEFAULT_GAME_LENGTH: Duration = Duration::from_secs(12);
 
 #[derive(Debug, PartialOrd, PartialEq)]
 pub struct WordAttempt {
