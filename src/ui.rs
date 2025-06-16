@@ -189,7 +189,7 @@ fn build_results_screen(screen_frame: &mut Frame, app: &mut App) {
     screen_frame.render_widget(build_header(), screen_sections[0]);
 
     // Score screen body
-    let score = &app.current_score;
+    let score = &app.score;
     let score_data = vec![
         ResultData {
             value: format!("{:.0} ", score.words_per_minute),
@@ -200,16 +200,16 @@ fn build_results_screen(screen_frame: &mut Frame, app: &mut App) {
             subtext: "accuracy".to_string(),
         },
         ResultData {
-            value: score.num_words.to_string(),
-            subtext: "words typed correctly".to_string(),
-        },
-        ResultData {
             value: score.character_hits.to_string(),
-            subtext: "character hits".to_string(),
+            subtext: "characters hit".to_string(),
         },
         ResultData {
             value: score.character_misses.to_string(),
-            subtext: "character misses".to_string(),
+            subtext: "characters missed".to_string(),
+        },
+        ResultData {
+            value: score.num_words.to_string(),
+            subtext: "words typed correctly".to_string(),
         },
     ];
     let constraints = score_data.iter().map(|d| 2).collect::<Vec<_>>();
@@ -265,7 +265,7 @@ fn build_footer(
     let footer_right_corner = footer_sections[1];
     if show_scoring {
         let empty_score_placeholder = "-";
-        let score = &app.current_score;
+        let score = &app.score;
         let score_block = Block::default().padding(Padding::right(1));
         let accuracy = if app.game_active && !score.accuracy.is_nan() {
             format!("{:.0}%", score.accuracy * 100.0)
@@ -279,8 +279,8 @@ fn build_footer(
         };
         let score_string = format!(
             "{}/{} · acc: {} · wpm: {}",
-            score.character_hits.to_string(),
-            score.character_misses.to_string(),
+            score.character_matches.to_string(),
+            score.character_mismatches.to_string(),
             accuracy,
             wpm,
         );

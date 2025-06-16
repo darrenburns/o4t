@@ -1,6 +1,7 @@
 use crate::words;
 use rand::seq::IteratorRandom;
 use std::cmp::max;
+use std::ops::Div;
 use std::time::Duration;
 use tachyonfx::Interpolation::QuadOut;
 use tachyonfx::{fx, Effect};
@@ -13,7 +14,7 @@ pub enum Screen {
 }
 
 const NUMBER_OF_WORDS_TO_PICK: usize = 500;
-const DEFAULT_GAME_LENGTH: Duration = Duration::from_secs(12);
+const DEFAULT_GAME_LENGTH: Duration = Duration::from_secs(4);
 
 #[derive(Debug, PartialOrd, PartialEq)]
 pub struct WordAttempt {
@@ -25,11 +26,23 @@ pub struct WordAttempt {
 
 #[derive(Debug, Default)]
 pub struct Score {
+    // Number of characters matching what they should be at the current point in time.
+    pub character_matches: u16,
+    // Number of characters which don't match what they should be at the current point in time.
+    // This value can decrease if the user corrects a typo.
+    pub character_mismatches: u16,
+    // The number of correctly typed characters in this session. Always increasing.
     pub character_hits: u16,
+    // The number of characters which were typed which shouldn't have been in this session.
+    // This number cannot decrease. If you make a typo, it remains in this value.
     pub character_misses: u16,
+    // The ratio of character_hits / character_hits + character_misses
     pub accuracy: f32,
+    // Number of characters typed per minute.
     pub chars_per_minute: f32,
+    // Number of words typed CORRECTLY per minute.
     pub words_per_minute: f32,
+    // Total number of CORRECTLY typed words.
     pub num_words: u16,
 }
 
@@ -61,7 +74,7 @@ pub struct App {
     pub game_active: bool,
     pub millis_at_current_game_start: u64,
     pub current_millis: u64,
-    pub current_score: Score,
+    pub score: Score,
     pub post_game_stats: PostGameStats,
     pub load_results_screen_effect: Effect,
     pub load_words_effect: Effect,
@@ -87,7 +100,7 @@ impl App {
             game_active: false,
             millis_at_current_game_start: 0,
             current_millis: 0,
-            current_score: Score::default(),
+            score: Score::default(),
             post_game_stats: PostGameStats::default(),
             load_words_effect: load_words_effect(),
             load_results_screen_effect: load_results_screen_effect(),
@@ -126,8 +139,8 @@ impl App {
     }
 
     pub fn refresh_internal_score(&mut self) {
-        let mut character_hits: u16 = 0;
-        let mut character_misses: u16 = 0;
+        let mut character_matches: u16 = 0;
+        let mut character_mismatches: u16 = 0;
         let mut num_correct_words = 0;
 
         // Count hits and misses
@@ -142,10 +155,10 @@ impl App {
             for (user_char, expected_char) in zipped_chars {
                 let is_hit = user_char == expected_char;
                 if is_hit {
-                    character_hits += 1;
+                    character_matches += 1;
                     this_word_hits += 1;
                 } else {
-                    character_misses += 1;
+                    character_mismatches += 1;
                 }
             }
             if this_word_hits == attempt.word.len() {
@@ -153,18 +166,23 @@ impl App {
             }
         }
 
-        // Compute accuracy based on character hits and misses
-        let num_chars: u16 = character_hits.saturating_add(character_misses);
-        let accuracy = character_hits as f32 / max(1, num_chars) as f32;
+        let character_hits = self.score.character_hits;
+        let character_misses = self.score.character_misses;
+        let accuracy = (character_hits as f32)
+            .div(character_hits.saturating_add(character_misses) as f32);
+
+        let num_chars: u16 = character_matches.saturating_add(character_mismatches);
 
         // Chars and words per minute
         let minutes_elapsed = (self.game_time_elapsed_millis() as f32) / 1000. / 60.;
         let chars_per_minute = num_chars as f32 / minutes_elapsed;
         let words_per_minute = num_correct_words as f32 / minutes_elapsed;
 
-        self.current_score = Score {
-            character_hits,
-            character_misses,
+        self.score = Score {
+            character_matches,
+            character_mismatches,
+            character_hits: self.score.character_hits,
+            character_misses: self.score.character_misses,
             accuracy,
             chars_per_minute,
             words_per_minute,

@@ -14,6 +14,8 @@
     <list default="true" id="e5189378-0d9f-4dd8-9f90-573d5292428d" name="Changes" comment="alt+backspace and ctrl+w support">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/app.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/app.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/main.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ui.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/ui.rs" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -102,7 +104,7 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1749913446826</updated>
-      <workItem from="1749913447859" duration="32930000" />
+      <workItem from="1749913447859" duration="35335000" />
     </task>
     <task id="LOCAL-00001" summary="results screen, loading animations">
       <option name="closed" value="true" />

@@ -122,6 +122,19 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
                         }
                     }
                     KeyCode::Char(char) => {
+                        let current_word = &app.words[app.current_word_offset].word;
+                        let cursor_offset = app.current_user_input.len();
+                        let expected_char = current_word.chars().nth(cursor_offset);
+                        if let Some(expected_char) = expected_char {
+                            if char == expected_char {
+                                app.score.character_hits += 1;
+                            } else {
+                                app.score.character_misses += 1;
+                            }
+                        } else {
+                            // User has gone beyond the word and is typing extra characters.
+                            app.score.character_misses += 1
+                        }
                         if !app.game_active {
                             app.game_active = true;
                             app.millis_at_current_game_start = app.current_millis;
