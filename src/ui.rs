@@ -85,10 +85,18 @@ fn build_game_screen(screen_frame: &mut Frame, app: &mut App) {
     for (index, word) in words.iter().enumerate() {
         let mut char_style = Style::default().fg(Color::Gray).add_modifier(Modifier::DIM);
         let user_attempt = &app.words[index].user_attempt;
+
+        // Compute the cursor offset
+        if index < app.current_word_offset {
+            cursor_offset += word.width() + 1;
+        } else if index == app.current_word_offset {
+            cursor_offset += app.current_user_input.width();
+        }
+
         if app.current_word_offset == index {
             // Check which characters match and which ones don't in order to build up the styling for this word.
             char_style = char_style.add_modifier(Modifier::BOLD);
-            cursor_offset += build_styled_word(
+            build_styled_word(
                 &mut words_text,
                 char_style,
                 app.current_user_input.to_string(),
@@ -104,19 +112,17 @@ fn build_game_screen(screen_frame: &mut Frame, app: &mut App) {
             } else {
                 words_text.push_span(Span::default().content(" "));
             }
-            cursor_offset += 1; // Account for the space.
         } else if user_attempt.is_empty() {
             // It's not the current word, and there's no attempt yet, basic rendering.
             let current_word_span = Span::styled(word, char_style);
             let span_width = current_word_span.width();
             words_text.push_span(current_word_span);
-            cursor_offset += (span_width + 1);
             if index != words.len() - 1 {
                 words_text.push_span(Span::default().content(" "));
             }
         } else {
             // It's not the current word, but we have attempted it - render the word attempt.
-            cursor_offset += build_styled_word(
+            build_styled_word(
                 &mut words_text,
                 char_style,
                 user_attempt.to_string(),
@@ -127,7 +133,6 @@ fn build_game_screen(screen_frame: &mut Frame, app: &mut App) {
             if index != words.len() - 1 {
                 words_text.push_span(Span::default().content(" "));
             }
-            cursor_offset += 1; // Account for the space
         }
     }
 
@@ -155,9 +160,6 @@ fn build_game_screen(screen_frame: &mut Frame, app: &mut App) {
         screen_frame.render_widget(game_timer, centered_body_sections[0]);
     }
 
-    // Wrap the words text
-
-    // The words to be typed
 
     let styled = &words_text.iter().map(|line| {
         let graphemes = line
@@ -175,7 +177,7 @@ fn build_game_screen(screen_frame: &mut Frame, app: &mut App) {
     // At that point we know we're at the cursor char, and can check the line number
     // from there.
     let (mut row, mut offset_from_start_of_text) = (0, 0);
-    let mut cursor_found = false;
+    let mut cursor_row = 0;
     let mut wrapped_lines = vec![];
     app.log_file
         .write_all((text_render_area_width.to_string() + "\n").as_bytes())
@@ -194,23 +196,21 @@ fn build_game_screen(screen_frame: &mut Frame, app: &mut App) {
         wrapped_lines.push(line_symbols);
         for grapheme in wrapped_line.line {
             offset_from_start_of_text += grapheme.symbol.width();
-            if offset_from_start_of_text == cursor_offset {
-                cursor_found = true;
-                break;
+            if offset_from_start_of_text >= cursor_offset {
+                cursor_row = row;
             }
-        }
-        if cursor_found {
-            break;
         }
         row += 1;
     }
 
+    app.debug_string = wrapped_lines.len().to_string();
     let words_paragraph = Paragraph::new(Text::from(wrapped_lines))
-        .block(Block::default().padding(Padding::horizontal(8)));
+        .wrap(Wrap { trim: false })
+        .block(Block::default().padding(Padding::horizontal(h_pad)));
 
-    app.debug_string = row.to_string();
 
     let launch_effect = &mut app.load_words_effect;
+    
     screen_frame.render_widget(words_paragraph, centered_body_sections[1]);
     if launch_effect.running() {
         screen_frame.render_effect(
