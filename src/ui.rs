@@ -88,7 +88,7 @@ fn build_game_screen(screen_frame: &mut Frame, app: &mut App) {
 
         // Compute the cursor offset
         if index < app.current_word_offset {
-            cursor_offset += word.width();
+            cursor_offset += max(app.words[index].user_attempt.width(), word.width());
         } else if index == app.current_word_offset {
             cursor_offset += app.current_user_input.width();
         }
@@ -198,7 +198,7 @@ fn build_game_screen(screen_frame: &mut Frame, app: &mut App) {
         for grapheme in wrapped_line.line {
             if grapheme.symbol != " " {
                 offset_from_start_of_text += grapheme.symbol.width();
-                if offset_from_start_of_text >= cursor_offset && !cursor_found {
+                if offset_from_start_of_text > cursor_offset && !cursor_found {
                     cursor_row = row;
                     cursor_found = true;
                 }
@@ -210,14 +210,14 @@ fn build_game_screen(screen_frame: &mut Frame, app: &mut App) {
     let mut words_paragraph = Paragraph::new(Text::from(wrapped_lines))
         .wrap(Wrap { trim: false })
         .block(Block::default().padding(Padding::horizontal(h_pad)));
-    
+
     app.debug_string = cursor_row.to_string();
     if cursor_row > 2 {
         words_paragraph = words_paragraph.scroll((cursor_row - 2, 0));
     }
-    
+
     screen_frame.render_widget(words_paragraph, centered_body_sections[1]);
-    
+
     let launch_effect = &mut app.load_words_effect;
     if launch_effect.running() {
         screen_frame.render_effect(
@@ -289,8 +289,8 @@ fn build_results_screen(screen_frame: &mut Frame, app: &mut App) {
             subtext: "words".to_string(),
         },
     ];
-    let col_constraints = (0..4).map(|_| Length(10));
-    let row_constraints = (0..3).map(|_| Length(3));
+    let col_constraints = (0..3).map(|_| Length(10));
+    let row_constraints = (0..2).map(|_| Length(3));
     let horizontal = Layout::horizontal(col_constraints).spacing(1);
     let vertical = Layout::vertical(row_constraints)
         .flex(Center)
