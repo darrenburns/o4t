@@ -214,7 +214,7 @@ fn build_results_screen(screen_frame: &mut Frame, app: &mut App) {
     ];
     let constraints = score_data.iter().map(|d| 2).collect::<Vec<_>>();
     let score_data_areas = Layout::vertical(constraints)
-        .horizontal_margin(8)
+        .horizontal_margin(1)
         .flex(Center)
         .spacing(1)
         .split(screen_sections[1]);
