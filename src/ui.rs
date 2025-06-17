@@ -193,7 +193,7 @@ fn build_results_screen(screen_frame: &mut Frame, app: &mut App) {
     let score_data = vec![
         ResultData {
             value: format!("{:.0} ", score.words_per_minute),
-            subtext: "words per minute".to_string(),
+            subtext: "wpm".to_string(),
         },
         ResultData {
             value: format!("{:.0}%", score.accuracy * 100.),
@@ -201,19 +201,19 @@ fn build_results_screen(screen_frame: &mut Frame, app: &mut App) {
         },
         ResultData {
             value: score.character_hits.to_string(),
-            subtext: "characters hit".to_string(),
+            subtext: "hits".to_string(),
         },
         ResultData {
             value: score.character_misses.to_string(),
-            subtext: "characters missed".to_string(),
-        },
-        ResultData {
-            value: score.num_words.to_string(),
-            subtext: "words typed correctly".to_string(),
+            subtext: "misses".to_string(),
         },
         ResultData {
             value: score.best_char_streak.to_string(),
-            subtext: "longest streak".to_string(),
+            subtext: "streak".to_string(),
+        },
+        ResultData {
+            value: score.num_words.to_string(),
+            subtext: "words".to_string(),
         },
     ];
     let constraints = score_data.iter().map(|d| 2).collect::<Vec<_>>();
