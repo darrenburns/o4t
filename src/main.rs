@@ -20,10 +20,11 @@ use tokio::time::interval;
 mod app;
 mod ui;
 mod words;
+mod wrap;
 
 fn main() -> Result<(), Box<dyn Error>> {
     enable_raw_mode()?;
-    let mut stderr = std::io::stderr();
+    let mut stderr = io::stderr();
     execute!(stderr, EnterAlternateScreen, EnableMouseCapture)?;
 
     let backend = CrosstermBackend::new(stderr);

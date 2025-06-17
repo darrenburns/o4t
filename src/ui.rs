@@ -1,6 +1,8 @@
 use crate::app::{App, Screen};
+use crate::wrap::{LineComposer, WordWrapper};
 use ratatui::buffer::Buffer;
-use ratatui::layout::Alignment;
+use ratatui::layout::Flex::Center;
+use ratatui::layout::{Alignment, Margin};
 use ratatui::prelude::{Line, Widget};
 use ratatui::{
     Frame,
@@ -16,9 +18,11 @@ use ratatui::{
     text::{Span, Text},
     widgets::{Block, Padding, Paragraph, Wrap},
 };
+use std::cmp::min;
+use std::io::Write;
 use std::rc::Rc;
-use ratatui::layout::Flex::{Center, SpaceAround};
 use tachyonfx::{EffectRenderer, Shader};
+use unicode_width::UnicodeWidthStr;
 
 #[derive(Default, Debug)]
 struct ResultData {
@@ -59,9 +63,15 @@ fn build_game_screen(screen_frame: &mut Frame, app: &mut App) {
         ])
         .split(screen_frame.area());
 
-    // Header
-    let header = build_header();
-    screen_frame.render_widget(header, screen_sections[0]);
+    // Header (actual render call is at bottom since we may need to include debug info).
+    if app.is_debug_mode {
+        let debug_text = Line::from(vec![Span::raw("debug: "), Span::raw(&app.debug_string)]);
+        let header = Paragraph::new(debug_text);
+        screen_frame.render_widget(header, screen_sections[0]);
+    } else {
+        let header = build_header();
+        screen_frame.render_widget(header, screen_sections[0]);
+    }
 
     // Body text containing the words to show the user that they must type.
     let words = app
@@ -71,13 +81,14 @@ fn build_game_screen(screen_frame: &mut Frame, app: &mut App) {
         .collect::<Vec<_>>();
 
     let mut words_text = Text::default();
+    let mut cursor_offset = 0;
     for (index, word) in words.iter().enumerate() {
         let mut char_style = Style::default().fg(Color::Gray).add_modifier(Modifier::DIM);
         let user_attempt = &app.words[index].user_attempt;
         if app.current_word_offset == index {
             // Check which characters match and which ones don't in order to build up the styling for this word.
             char_style = char_style.add_modifier(Modifier::BOLD);
-            build_styled_word(
+            cursor_offset += build_styled_word(
                 &mut words_text,
                 char_style,
                 app.current_user_input.to_string(),
@@ -93,15 +104,19 @@ fn build_game_screen(screen_frame: &mut Frame, app: &mut App) {
             } else {
                 words_text.push_span(Span::default().content(" "));
             }
+            cursor_offset += 1; // Account for the space.
         } else if user_attempt.is_empty() {
             // It's not the current word, and there's no attempt yet, basic rendering.
-            words_text.push_span(Span::styled(word, char_style));
+            let current_word_span = Span::styled(word, char_style);
+            let span_width = current_word_span.width();
+            words_text.push_span(current_word_span);
+            cursor_offset += (span_width + 1);
             if index != words.len() - 1 {
                 words_text.push_span(Span::default().content(" "));
             }
         } else {
             // It's not the current word, but we have attempted it - render the word attempt.
-            build_styled_word(
+            cursor_offset += build_styled_word(
                 &mut words_text,
                 char_style,
                 user_attempt.to_string(),
@@ -112,6 +127,7 @@ fn build_game_screen(screen_frame: &mut Frame, app: &mut App) {
             if index != words.len() - 1 {
                 words_text.push_span(Span::default().content(" "));
             }
+            cursor_offset += 1; // Account for the space
         }
     }
 
@@ -119,10 +135,11 @@ fn build_game_screen(screen_frame: &mut Frame, app: &mut App) {
     let centered_body = center(
         screen_sections[1],
         Length(screen_frame.area().width),
-        Length(6),  // 1 timer row, 5 lines of text
+        Length(6), // 1 timer row, 5 lines of text
     );
     let centered_body_sections = Layout::vertical([Length(1), Min(5)]).split(centered_body);
 
+    let h_pad = 8;
     // The game timer
     if app.game_active {
         let game_time_remaining_secs = app.game_time_remaining_millis().div_ceil(1000);
@@ -134,15 +151,65 @@ fn build_game_screen(screen_frame: &mut Frame, app: &mut App) {
             game_time_remaining_secs.to_string(),
             timer_style,
         ))
-        .block(Block::default().padding(Padding::horizontal(8)));
+        .block(Block::default().padding(Padding::horizontal(h_pad)));
         screen_frame.render_widget(game_timer, centered_body_sections[0]);
     }
 
+    // Wrap the words text
+
     // The words to be typed
-    let words_paragraph = Paragraph::new(words_text)
-        .wrap(Wrap::default())
-        .block(Block::default().padding(Padding::horizontal(8)))
-        .scroll((0, 0)); // TODO - scroll as we move through the paragraph
+
+    let styled = &words_text.iter().map(|line| {
+        let graphemes = line
+            .spans
+            .iter()
+            .flat_map(|span| span.styled_graphemes(span.style));
+        let alignment = line.alignment.unwrap_or(Alignment::Left);
+        (graphemes, alignment)
+    });
+
+    let text_render_area_width = screen_sections[1].inner(Margin::new(h_pad, 0)).width;
+    let mut wrapper = WordWrapper::new(styled.clone().into_iter(), text_render_area_width, false);
+
+    // Continuously sum the widths until we get to the cursor offset.
+    // At that point we know we're at the cursor char, and can check the line number
+    // from there.
+    let (mut row, mut offset_from_start_of_text) = (0, 0);
+    let mut cursor_found = false;
+    let mut wrapped_lines = vec![];
+    app.log_file
+        .write_all((text_render_area_width.to_string() + "\n").as_bytes())
+        .unwrap();
+    while let Some(wrapped_line) = wrapper.next_line() {
+        let line_symbols = wrapped_line
+            .line
+            .iter()
+            .map(|grapheme| Span::styled(grapheme.symbol, grapheme.style))
+            .collect::<Line>();
+
+        app.log_file
+            .write_all(format!("{}: {}\n", row, line_symbols.to_string()).as_bytes())
+            .unwrap();
+
+        wrapped_lines.push(line_symbols);
+        for grapheme in wrapped_line.line {
+            offset_from_start_of_text += grapheme.symbol.width();
+            if offset_from_start_of_text == cursor_offset {
+                cursor_found = true;
+                break;
+            }
+        }
+        if cursor_found {
+            break;
+        }
+        row += 1;
+    }
+
+    let words_paragraph = Paragraph::new(Text::from(wrapped_lines))
+        // .block(Block::default().padding(Padding::horizontal(8)));
+        .block(Block::default());
+
+    app.debug_string = row.to_string();
 
     let launch_effect = &mut app.load_words_effect;
     screen_frame.render_widget(words_paragraph, centered_body_sections[1]);
@@ -181,7 +248,7 @@ fn build_results_screen(screen_frame: &mut Frame, app: &mut App) {
         .direction(Direction::Vertical)
         .constraints([
             Length(1), // Header
-            Min(2),   // Body
+            Min(2),    // Body
             Length(1), // Footer
         ])
         .split(screen_frame.area());
@@ -217,9 +284,12 @@ fn build_results_screen(screen_frame: &mut Frame, app: &mut App) {
         },
     ];
     let col_constraints = (0..4).map(|_| Length(10));
-    let row_constraints = (0..3).map(|_| Length(2));
+    let row_constraints = (0..3).map(|_| Length(3));
     let horizontal = Layout::horizontal(col_constraints).spacing(1);
-    let vertical = Layout::vertical(row_constraints).flex(Center).spacing(1).horizontal_margin(1);
+    let vertical = Layout::vertical(row_constraints)
+        .flex(Center)
+        .spacing(1)
+        .horizontal_margin(1);
 
     let rows = vertical.split(screen_sections[1]);
     let cells = rows.iter().flat_map(|&row| horizontal.split(row).to_vec());
@@ -305,7 +375,8 @@ fn build_styled_word(
     expected_word: String,
     is_current_word: bool,
     is_past_word: bool,
-) {
+) -> usize {
+    let mut total_offset = 0;
     let zipped_chars = expected_word
         .chars()
         .zip(user_attempt.chars())
@@ -315,9 +386,12 @@ fn build_styled_word(
         let mut style = char_style;
         if user_char == expected_char {
             style = style.remove_modifier(Modifier::DIM);
-            words_text.push_span(Span::styled(expected_char.to_string(), style));
+            let span = Span::styled(expected_char.to_string(), style);
+            total_offset += span.width();
+            words_text.push_span(span);
         } else {
-            words_text.push_span(Span::styled(expected_char.to_string(), char_style.fg(Red)));
+            let span = Span::styled(expected_char.to_string(), char_style.fg(Red));
+            words_text.push_span(span);
         }
     }
 
@@ -329,27 +403,34 @@ fn build_styled_word(
 
     let mut missed_chars_iter = expected_word.chars().skip(min_len);
     if let Some(cursor_char) = missed_chars_iter.next() {
+        let missed_chars_span;
         if is_current_word {
-            words_text.push_span(Span::styled(
+            missed_chars_span = Span::styled(
                 cursor_char.to_string(),
                 char_style.add_modifier(Modifier::UNDERLINED),
-            ));
+            );
+            total_offset += missed_chars_span.width();
+            words_text.push_span(missed_chars_span);
         } else {
-            words_text.push_span(Span::styled(cursor_char.to_string(), missed_char_style));
+            missed_chars_span = Span::styled(cursor_char.to_string(), missed_char_style);
+            total_offset += missed_chars_span.width();
+            words_text.push_span(missed_chars_span);
         }
     }
 
-    words_text.push_span(Span::styled(
-        missed_chars_iter.collect::<String>(),
-        missed_char_style,
-    ));
+    let span = Span::styled(missed_chars_iter.collect::<String>(), missed_char_style);
+    total_offset += span.width();
+    words_text.push_span(span);
 
     // Render extra chars that the user typed beyond the length of the word
     let extra_chars_iter = user_attempt.chars().skip(min_len);
-    words_text.push_span(Span::styled(
+    let extra_chars_span = Span::styled(
         extra_chars_iter.collect::<String>(),
         char_style.fg(Red).add_modifier(Modifier::CROSSED_OUT),
-    ));
+    );
+    words_text.push_span(extra_chars_span);
+
+    total_offset
 }
 
 fn center(area: Rect, horizontal: Constraint, vertical: Constraint) -> Rect {

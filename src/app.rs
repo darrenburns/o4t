@@ -1,3 +1,5 @@
+use std::fs::File;
+use std::io::Write;
 use crate::words;
 use rand::seq::IteratorRandom;
 use std::ops::Div;
@@ -13,7 +15,7 @@ pub enum Screen {
 }
 
 const NUMBER_OF_WORDS_TO_PICK: usize = 500;
-const DEFAULT_GAME_LENGTH: Duration = Duration::from_secs(4);
+const DEFAULT_GAME_LENGTH: Duration = Duration::from_secs(30);
 
 #[derive(Debug, PartialOrd, PartialEq)]
 pub struct WordAttempt {
@@ -77,6 +79,12 @@ pub struct App {
     pub load_results_screen_effect: Effect,
     pub load_words_effect: Effect,
     pub last_tick_duration: Duration,
+    
+    pub is_debug_mode: bool,
+    // Debug string that can be rendered to screen
+    pub debug_string: String,
+    
+    pub log_file: File,
 }
 
 pub fn load_words_effect() -> Effect {
@@ -89,6 +97,8 @@ pub fn load_results_screen_effect() -> Effect {
 
 impl App {
     pub fn new() -> App {
+        let log_file = File::create("log.txt").unwrap();
+        log_file.set_len(0).unwrap();  // clear the file
         App {
             current_user_input: String::new(),
             current_word_offset: 0,
@@ -102,6 +112,9 @@ impl App {
             load_words_effect: load_words_effect(),
             load_results_screen_effect: load_results_screen_effect(),
             last_tick_duration: Duration::ZERO,
+            is_debug_mode: true,  // TODO - make cli switch
+            debug_string: "".to_string(),
+            log_file,
         }
     }
 
