@@ -18,7 +18,7 @@ use ratatui::{
     text::{Span, Text},
     widgets::{Block, Padding, Paragraph, Wrap},
 };
-use std::cmp::min;
+use std::cmp::{max, min};
 use std::io::Write;
 use std::rc::Rc;
 use tachyonfx::{EffectRenderer, Shader};
@@ -88,7 +88,7 @@ fn build_game_screen(screen_frame: &mut Frame, app: &mut App) {
 
         // Compute the cursor offset
         if index < app.current_word_offset {
-            cursor_offset += word.width() + 1;
+            cursor_offset += word.width();
         } else if index == app.current_word_offset {
             cursor_offset += app.current_user_input.width();
         }
@@ -178,6 +178,7 @@ fn build_game_screen(screen_frame: &mut Frame, app: &mut App) {
     // from there.
     let (mut row, mut offset_from_start_of_text) = (0, 0);
     let mut cursor_row = 0;
+    let mut cursor_found = false;
     let mut wrapped_lines = vec![];
     app.log_file
         .write_all((text_render_area_width.to_string() + "\n").as_bytes())
@@ -195,23 +196,29 @@ fn build_game_screen(screen_frame: &mut Frame, app: &mut App) {
 
         wrapped_lines.push(line_symbols);
         for grapheme in wrapped_line.line {
-            offset_from_start_of_text += grapheme.symbol.width();
-            if offset_from_start_of_text >= cursor_offset {
-                cursor_row = row;
+            if grapheme.symbol != " " {
+                offset_from_start_of_text += grapheme.symbol.width();
+                if offset_from_start_of_text >= cursor_offset && !cursor_found {
+                    cursor_row = row;
+                    cursor_found = true;
+                }
             }
         }
         row += 1;
     }
 
-    app.debug_string = wrapped_lines.len().to_string();
-    let words_paragraph = Paragraph::new(Text::from(wrapped_lines))
+    let mut words_paragraph = Paragraph::new(Text::from(wrapped_lines))
         .wrap(Wrap { trim: false })
         .block(Block::default().padding(Padding::horizontal(h_pad)));
-
-
-    let launch_effect = &mut app.load_words_effect;
+    
+    app.debug_string = cursor_row.to_string();
+    if cursor_row > 2 {
+        words_paragraph = words_paragraph.scroll((cursor_row - 2, 0));
+    }
     
     screen_frame.render_widget(words_paragraph, centered_body_sections[1]);
+    
+    let launch_effect = &mut app.load_words_effect;
     if launch_effect.running() {
         screen_frame.render_effect(
             launch_effect,
