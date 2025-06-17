@@ -1,10 +1,9 @@
 use crate::words;
 use rand::seq::IteratorRandom;
-use std::cmp::max;
 use std::ops::Div;
 use std::time::Duration;
 use tachyonfx::Interpolation::QuadOut;
-use tachyonfx::{fx, Effect};
+use tachyonfx::{Effect, fx};
 
 pub enum Screen {
     Game,
@@ -44,6 +43,11 @@ pub struct Score {
     pub words_per_minute: f32,
     // Total number of CORRECTLY typed words.
     pub num_words: u16,
+    // The number of words typed correctly in a row. Always increasing. Words that were typed
+    // incorrectly then changed don't count.
+    pub best_char_streak: u16,
+    pub current_char_streak: u16,
+
 }
 
 impl WordAttempt {
@@ -53,11 +57,6 @@ impl WordAttempt {
             user_attempt: String::new(),
         }
     }
-}
-
-#[derive(Debug, Default)]
-pub struct PostGameStats {
-    pub best_word_streak: usize
 }
 
 // Holds the state for the app
@@ -75,7 +74,6 @@ pub struct App {
     pub millis_at_current_game_start: u64,
     pub current_millis: u64,
     pub score: Score,
-    pub post_game_stats: PostGameStats,
     pub load_results_screen_effect: Effect,
     pub load_words_effect: Effect,
     pub last_tick_duration: Duration,
@@ -101,7 +99,6 @@ impl App {
             millis_at_current_game_start: 0,
             current_millis: 0,
             score: Score::default(),
-            post_game_stats: PostGameStats::default(),
             load_words_effect: load_words_effect(),
             load_results_screen_effect: load_results_screen_effect(),
             last_tick_duration: Duration::ZERO,
@@ -109,7 +106,6 @@ impl App {
     }
 
     pub fn reset_game(&mut self) {
-
         *self = App::new();
     }
 
@@ -123,19 +119,6 @@ impl App {
 
     pub fn game_time_remaining_millis(&self) -> u64 {
         (DEFAULT_GAME_LENGTH.as_millis() as u64).saturating_sub(self.game_time_elapsed_millis())
-    }
-
-    pub fn compute_postgame_stats(&mut self) {
-        let mut best_word_combo = 0;
-        let mut current_streak = 0;
-        for attempt in &self.words {
-            if attempt.user_attempt == attempt.word {
-                current_streak += 1;
-            } else {
-                current_streak = 0;
-            }
-            best_word_combo = max(best_word_combo, current_streak);
-        }
     }
 
     pub fn refresh_internal_score(&mut self) {
@@ -168,8 +151,8 @@ impl App {
 
         let character_hits = self.score.character_hits;
         let character_misses = self.score.character_misses;
-        let accuracy = (character_hits as f32)
-            .div(character_hits.saturating_add(character_misses) as f32);
+        let accuracy =
+            (character_hits as f32).div(character_hits.saturating_add(character_misses) as f32);
 
         let num_chars: u16 = character_matches.saturating_add(character_mismatches);
 
@@ -187,6 +170,8 @@ impl App {
             chars_per_minute,
             words_per_minute,
             num_words: num_correct_words,
+            best_char_streak: self.score.best_char_streak,
+            current_char_streak: self.score.current_char_streak,
         }
     }
 }

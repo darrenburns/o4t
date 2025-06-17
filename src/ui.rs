@@ -211,6 +211,10 @@ fn build_results_screen(screen_frame: &mut Frame, app: &mut App) {
             value: score.num_words.to_string(),
             subtext: "words typed correctly".to_string(),
         },
+        ResultData {
+            value: score.best_char_streak.to_string(),
+            subtext: "longest streak".to_string(),
+        },
     ];
     let constraints = score_data.iter().map(|d| 2).collect::<Vec<_>>();
     let score_data_areas = Layout::vertical(constraints)

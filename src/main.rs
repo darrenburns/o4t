@@ -2,11 +2,14 @@ use crate::app::{App, Screen, load_results_screen_effect, load_words_effect};
 use crate::ui::ui;
 use ratatui::Terminal;
 use ratatui::backend::{Backend, CrosstermBackend};
-use ratatui::crossterm::event::{DisableMouseCapture, EnableMouseCapture, Event, KeyCode, KeyModifiers};
+use ratatui::crossterm::event::{
+    DisableMouseCapture, EnableMouseCapture, Event, KeyCode, KeyModifiers,
+};
 use ratatui::crossterm::terminal::{
     EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode, enable_raw_mode,
 };
 use ratatui::crossterm::{event, execute};
+use std::cmp::max;
 use std::error::Error;
 use std::time::Instant;
 use std::{io, thread};
@@ -77,7 +80,6 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
             if app.game_time_remaining_millis() == 0 {
                 app.load_results_screen_effect = load_results_screen_effect();
                 app.game_active = false;
-                app.compute_postgame_stats();
                 app.current_screen = Screen::Results;
             }
         }
@@ -87,17 +89,12 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
         }
 
         if let Event::Key(key) = event::read()? {
-            // Skip all key release events.
             if key.kind == event::KeyEventKind::Release {
                 continue;
             }
 
             match key.code {
-                // Pressing escape exits.
-                KeyCode::Esc => {
-                    app.current_screen = Screen::Exiting; // TODO
-                    return Ok(true);
-                }
+                KeyCode::Esc => return Ok(true),
                 KeyCode::Tab => app.reset_game(),
                 _ => {}
             }
@@ -127,14 +124,20 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
                         let expected_char = current_word.chars().nth(cursor_offset);
                         if let Some(expected_char) = expected_char {
                             if char == expected_char {
+                                app.score.current_char_streak += 1;
                                 app.score.character_hits += 1;
                             } else {
+                                app.score.current_char_streak = 0;
                                 app.score.character_misses += 1;
                             }
                         } else {
                             // User has gone beyond the word and is typing extra characters.
-                            app.score.character_misses += 1
+                            app.score.character_misses += 1;
+                            app.score.current_char_streak = 0;
                         }
+                        app.score.best_char_streak =
+                            max(app.score.best_char_streak, app.score.current_char_streak);
+
                         if !app.game_active {
                             app.game_active = true;
                             app.millis_at_current_game_start = app.current_millis;
