@@ -17,7 +17,7 @@ use ratatui::{
     widgets::{Block, Padding, Paragraph, Wrap},
 };
 use std::rc::Rc;
-use ratatui::layout::Flex::Center;
+use ratatui::layout::Flex::{Center, SpaceAround};
 use tachyonfx::{EffectRenderer, Shader};
 
 #[derive(Default, Debug)]
@@ -216,15 +216,16 @@ fn build_results_screen(screen_frame: &mut Frame, app: &mut App) {
             subtext: "words".to_string(),
         },
     ];
-    let constraints = score_data.iter().map(|d| 2).collect::<Vec<_>>();
-    let score_data_areas = Layout::vertical(constraints)
-        .horizontal_margin(1)
-        .flex(Center)
-        .spacing(1)
-        .split(screen_sections[1]);
+    let col_constraints = (0..4).map(|_| Length(10));
+    let row_constraints = (0..3).map(|_| Length(2));
+    let horizontal = Layout::horizontal(col_constraints).spacing(1);
+    let vertical = Layout::vertical(row_constraints).flex(Center).spacing(1).horizontal_margin(1);
 
-    for (score_data, area) in score_data.into_iter().zip(score_data_areas.iter()) {
-        screen_frame.render_widget(score_data, *area);
+    let rows = vertical.split(screen_sections[1]);
+    let cells = rows.iter().flat_map(|&row| horizontal.split(row).to_vec());
+
+    for (score_data, cell_area) in score_data.into_iter().zip(cells) {
+        screen_frame.render_widget(score_data, cell_area);
     }
 
     let load_effect = &mut app.load_results_screen_effect;
