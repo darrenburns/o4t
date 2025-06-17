@@ -206,8 +206,7 @@ fn build_game_screen(screen_frame: &mut Frame, app: &mut App) {
     }
 
     let words_paragraph = Paragraph::new(Text::from(wrapped_lines))
-        // .block(Block::default().padding(Padding::horizontal(8)));
-        .block(Block::default());
+        .block(Block::default().padding(Padding::horizontal(8)));
 
     app.debug_string = row.to_string();
 
