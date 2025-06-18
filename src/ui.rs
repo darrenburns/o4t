@@ -1,10 +1,12 @@
 use crate::app::{App, Screen};
 use crate::wrap::{LineComposer, WordWrapper};
 use ratatui::buffer::Buffer;
+use ratatui::layout::Constraint::Max;
 use ratatui::layout::Flex::Center;
 use ratatui::layout::{Alignment, Margin};
 use ratatui::prelude::{Line, Widget};
 use ratatui::{
+    Frame,
     layout::Constraint,
     layout::Constraint::{Length, Min},
     layout::Direction,
@@ -16,7 +18,6 @@ use ratatui::{
     style::{Color, Modifier, Style},
     text::{Span, Text},
     widgets::{Block, Padding, Paragraph, Wrap},
-    Frame,
 };
 use std::cmp::max;
 use std::rc::Rc;
@@ -158,7 +159,6 @@ fn build_game_screen(screen_frame: &mut Frame, app: &mut App) {
         .block(Block::default().padding(Padding::horizontal(h_pad)));
         screen_frame.render_widget(game_timer, centered_body_sections[0]);
     }
-
 
     let styled = &words_text.iter().map(|line| {
         let graphemes = line
@@ -313,7 +313,8 @@ fn build_footer(
     show_scoring: bool,
     show_reset: bool,
 ) {
-    let footer_sections: [Rect; 2] = Layout::horizontal([Constraint::Fill(1), Min(10)])
+    let score_constraint = if show_scoring { Min(10) } else { Max(0) };
+    let footer_sections: [Rect; 2] = Layout::horizontal([Constraint::Fill(1), score_constraint])
         .flex(SpaceBetween)
         .areas(sections[2]);
 
