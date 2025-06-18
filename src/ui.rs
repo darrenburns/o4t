@@ -45,7 +45,7 @@ impl Widget for ResultData {
 pub fn ui(screen_frame: &mut Frame, app: &mut App) {
     match app.current_screen {
         Screen::Game => build_game_screen(screen_frame, app),
-        Screen::Results => build_results_screen(screen_frame, app),
+        Screen::Results => build_score_screen(screen_frame, app),
         Screen::Info => {}
         Screen::Exiting => {}
     }
@@ -83,7 +83,7 @@ fn build_game_screen(screen_frame: &mut Frame, app: &mut App) {
     let mut words_text = Text::default();
     let mut cursor_offset = 0;
     for (index, word) in words.iter().enumerate() {
-        let mut char_style = Style::default().fg(Color::Gray).add_modifier(Modifier::DIM);
+        let mut char_style = Style::default().fg(Color::Reset).add_modifier(Modifier::DIM);
         let user_attempt = &app.words[index].user_attempt;
 
         // Compute the cursor offset
@@ -145,20 +145,25 @@ fn build_game_screen(screen_frame: &mut Frame, app: &mut App) {
     let centered_body_sections = Layout::vertical([Length(1), Min(5)]).split(centered_body);
 
     let h_pad = 8;
-    // The game timer
+
+    // The game timer - shows as dim until the game starts.
+    let game_time_remaining_secs = app.game_time_remaining_millis().div_ceil(1000);
+    let mut timer_style = Style::default().fg(Yellow).add_modifier(Modifier::DIM);
     if app.game_active {
-        let game_time_remaining_secs = app.game_time_remaining_millis().div_ceil(1000);
-        let mut timer_style = Style::default().fg(Yellow).add_modifier(Modifier::BOLD);
-        if game_time_remaining_secs <= 3 {
-            timer_style = timer_style.add_modifier(Modifier::UNDERLINED);
-        }
-        let game_timer = Paragraph::new(Text::styled(
-            game_time_remaining_secs.to_string(),
-            timer_style,
-        ))
-        .block(Block::default().padding(Padding::horizontal(h_pad)));
-        screen_frame.render_widget(game_timer, centered_body_sections[0]);
+        timer_style = timer_style.add_modifier(Modifier::BOLD).remove_modifier(Modifier::DIM);
     }
+
+    // When the game is almost over, we underline the timer.
+    if game_time_remaining_secs <= 3 {
+        timer_style = timer_style.add_modifier(Modifier::UNDERLINED);
+    }
+
+    let game_timer = Paragraph::new(Text::styled(
+        game_time_remaining_secs.to_string(),
+        timer_style,
+    ))
+    .block(Block::default().padding(Padding::horizontal(h_pad)));
+    screen_frame.render_widget(game_timer, centered_body_sections[0]);
 
     let styled = &words_text.iter().map(|line| {
         let graphemes = line
@@ -238,7 +243,7 @@ fn build_header() -> Paragraph<'static> {
     title
 }
 
-fn build_results_screen(screen_frame: &mut Frame, app: &mut App) {
+fn build_score_screen(screen_frame: &mut Frame, app: &mut App) {
     let screen_sections = Layout::default()
         .horizontal_margin(3)
         .vertical_margin(1)

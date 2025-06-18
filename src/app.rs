@@ -60,6 +60,11 @@ impl WordAttempt {
     }
 }
 
+#[derive(Debug, Default)]
+pub struct ScoreScreenState {
+    pub menu_index: usize,
+}
+
 // Holds the state for the app
 pub struct App {
     // the current input the user has typed while trying to type words[0]
@@ -82,6 +87,8 @@ pub struct App {
     pub is_debug_mode: bool,
     // Debug string that can be rendered to screen
     pub debug_string: String,
+    
+    pub score_screen_state: ScoreScreenState,
 }
 
 pub fn load_words_effect() -> Effect {
@@ -109,6 +116,7 @@ impl App {
             last_tick_duration: Duration::ZERO,
             is_debug_mode: false,  // TODO - make cli switch
             debug_string: "".to_string(),
+            score_screen_state: ScoreScreenState::default(),
         }
     }
 
