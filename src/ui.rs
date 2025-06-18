@@ -211,7 +211,6 @@ fn build_game_screen(screen_frame: &mut Frame, app: &mut App) {
         .wrap(Wrap { trim: false })
         .block(Block::default().padding(Padding::horizontal(h_pad)));
 
-    app.debug_string = cursor_row.to_string();
     if cursor_row > 2 {
         words_paragraph = words_paragraph.scroll((cursor_row - 2, 0));
     }

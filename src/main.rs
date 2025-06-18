@@ -102,6 +102,7 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
 
             let ctrl = key.modifiers.contains(KeyModifiers::CONTROL);
             let alt = key.modifiers.contains(KeyModifiers::ALT);
+            let shift = key.modifiers.contains(KeyModifiers::SHIFT);
 
             match app.current_screen {
                 Screen::Game => match key.code {
@@ -114,12 +115,11 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
                             app.current_user_input = String::new();
                         }
                     }
-                    KeyCode::Char(char) if !key.modifiers.is_empty() => {
+                    KeyCode::Char(char) => {
                         if ctrl && char == 'w' {
                             app.current_user_input = String::new();
                         }
-                    }
-                    KeyCode::Char(char) => {
+                        
                         let current_word = &app.words[app.current_word_offset].word;
                         let cursor_offset = app.current_user_input.len();
                         let expected_char = current_word.chars().nth(cursor_offset);

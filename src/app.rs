@@ -113,7 +113,7 @@ impl App {
             load_words_effect: load_words_effect(),
             load_results_screen_effect: load_results_screen_effect(),
             last_tick_duration: Duration::ZERO,
-            is_debug_mode: false,  // TODO - make cli switch
+            is_debug_mode: true,  // TODO - make cli switch
             debug_string: "".to_string(),
             log_file,
         }
