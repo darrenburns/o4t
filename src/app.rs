@@ -1,6 +1,5 @@
 use crate::words;
 use rand::seq::IteratorRandom;
-use std::fs::File;
 use std::ops::Div;
 use std::time::Duration;
 use tachyonfx::Interpolation::QuadOut;
@@ -84,8 +83,6 @@ pub struct App {
     pub is_debug_mode: bool,
     // Debug string that can be rendered to screen
     pub debug_string: String,
-    
-    pub log_file: File,
 }
 
 pub fn load_words_effect() -> Effect {
@@ -98,8 +95,6 @@ pub fn load_results_screen_effect() -> Effect {
 
 impl App {
     pub fn new() -> App {
-        let log_file = File::create("log.txt").unwrap();
-        log_file.set_len(0).unwrap();  // clear the file
         App {
             current_user_input: String::new(),
             current_word_offset: 0,
@@ -115,7 +110,6 @@ impl App {
             last_tick_duration: Duration::ZERO,
             is_debug_mode: true,  // TODO - make cli switch
             debug_string: "".to_string(),
-            log_file,
         }
     }
 
@@ -177,7 +171,7 @@ impl App {
         let real_words_per_minute = num_correct_words as f32 / minutes_elapsed;
         // We add the current_word_offset below as it represents the number of spaces, which should
         // be included in the WPM calculation.
-        let wpm = ((character_matches + self.current_word_offset) as f32 / 5.) * (60. / seconds_elapsed); 
+        let wpm = ((character_matches + self.current_word_offset) as f32 / 5.) * (60. / seconds_elapsed);
 
         self.score = Score {
             character_matches,

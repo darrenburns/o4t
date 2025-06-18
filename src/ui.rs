@@ -19,7 +19,6 @@ use ratatui::{
     Frame,
 };
 use std::cmp::max;
-use std::io::Write;
 use std::rc::Rc;
 use tachyonfx::{EffectRenderer, Shader};
 use unicode_width::UnicodeWidthStr;
@@ -180,19 +179,12 @@ fn build_game_screen(screen_frame: &mut Frame, app: &mut App) {
     let mut cursor_row = 0;
     let mut cursor_found = false;
     let mut wrapped_lines = vec![];
-    app.log_file
-        .write_all((text_render_area_width.to_string() + "\n").as_bytes())
-        .unwrap();
     while let Some(wrapped_line) = wrapper.next_line() {
         let line_symbols = wrapped_line
             .line
             .iter()
             .map(|grapheme| Span::styled(grapheme.symbol, grapheme.style))
             .collect::<Line>();
-
-        app.log_file
-            .write_all(format!("{}: {}\n", row, line_symbols.to_string()).as_bytes())
-            .unwrap();
 
         wrapped_lines.push(line_symbols);
         for grapheme in wrapped_line.line {
