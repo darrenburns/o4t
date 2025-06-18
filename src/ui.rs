@@ -83,7 +83,9 @@ fn build_game_screen(screen_frame: &mut Frame, app: &mut App) {
     let mut words_text = Text::default();
     let mut cursor_offset = 0;
     for (index, word) in words.iter().enumerate() {
-        let mut char_style = Style::default().fg(Color::Reset).add_modifier(Modifier::DIM);
+        let mut char_style = Style::default()
+            .fg(Color::Reset)
+            .add_modifier(Modifier::DIM);
         let user_attempt = &app.words[index].user_attempt;
 
         // Compute the cursor offset
@@ -142,15 +144,17 @@ fn build_game_screen(screen_frame: &mut Frame, app: &mut App) {
         Length(screen_frame.area().width),
         Length(6), // 1 timer row, 5 lines of text
     );
-    let centered_body_sections = Layout::vertical([Length(1), Min(5)]).split(centered_body);
+    let [timer_section, words_section] =
+        Layout::vertical([Length(1), Min(5)]).areas::<2>(centered_body);
 
     let h_pad = 8;
-
     // The game timer - shows as dim until the game starts.
     let game_time_remaining_secs = app.game_time_remaining_millis().div_ceil(1000);
     let mut timer_style = Style::default().fg(Yellow).add_modifier(Modifier::DIM);
     if app.game_active {
-        timer_style = timer_style.add_modifier(Modifier::BOLD).remove_modifier(Modifier::DIM);
+        timer_style = timer_style
+            .add_modifier(Modifier::BOLD)
+            .remove_modifier(Modifier::DIM);
     }
 
     // When the game is almost over, we underline the timer.
@@ -163,7 +167,7 @@ fn build_game_screen(screen_frame: &mut Frame, app: &mut App) {
         timer_style,
     ))
     .block(Block::default().padding(Padding::horizontal(h_pad)));
-    screen_frame.render_widget(game_timer, centered_body_sections[0]);
+    screen_frame.render_widget(game_timer, timer_section);
 
     let styled = &words_text.iter().map(|line| {
         let graphemes = line
@@ -212,15 +216,11 @@ fn build_game_screen(screen_frame: &mut Frame, app: &mut App) {
         words_paragraph = words_paragraph.scroll((cursor_row - 2, 0));
     }
 
-    screen_frame.render_widget(words_paragraph, centered_body_sections[1]);
+    screen_frame.render_widget(words_paragraph, words_section);
 
     let launch_effect = &mut app.load_words_effect;
     if launch_effect.running() {
-        screen_frame.render_effect(
-            launch_effect,
-            centered_body_sections[1],
-            app.last_tick_duration.into(),
-        );
+        screen_frame.render_effect(launch_effect, words_section, app.last_tick_duration.into());
     }
 
     // Footer
