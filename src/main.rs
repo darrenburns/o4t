@@ -1,14 +1,14 @@
-use crate::app::{App, Screen, load_results_screen_effect, load_words_effect};
+use crate::app::{load_results_screen_effect, load_words_effect, App, Screen};
 use crate::ui::ui;
-use ratatui::Terminal;
 use ratatui::backend::{Backend, CrosstermBackend};
 use ratatui::crossterm::event::{
     DisableMouseCapture, EnableMouseCapture, Event, KeyCode, KeyModifiers,
 };
 use ratatui::crossterm::terminal::{
-    EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode, enable_raw_mode,
+    disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen,
 };
 use ratatui::crossterm::{event, execute};
+use ratatui::Terminal;
 use std::cmp::max;
 use std::error::Error;
 use std::time::Instant;

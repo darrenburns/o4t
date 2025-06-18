@@ -1,11 +1,10 @@
-use std::fs::File;
-use std::io::Write;
 use crate::words;
 use rand::seq::IteratorRandom;
+use std::fs::File;
 use std::ops::Div;
 use std::time::Duration;
 use tachyonfx::Interpolation::QuadOut;
-use tachyonfx::{Effect, fx};
+use tachyonfx::{fx, Effect};
 
 pub enum Screen {
     Game,

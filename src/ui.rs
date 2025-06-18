@@ -5,7 +5,6 @@ use ratatui::layout::Flex::Center;
 use ratatui::layout::{Alignment, Margin};
 use ratatui::prelude::{Line, Widget};
 use ratatui::{
-    Frame,
     layout::Constraint,
     layout::Constraint::{Length, Min},
     layout::Direction,
@@ -17,8 +16,9 @@ use ratatui::{
     style::{Color, Modifier, Style},
     text::{Span, Text},
     widgets::{Block, Padding, Paragraph, Wrap},
+    Frame,
 };
-use std::cmp::{max, min};
+use std::cmp::max;
 use std::io::Write;
 use std::rc::Rc;
 use tachyonfx::{EffectRenderer, Shader};

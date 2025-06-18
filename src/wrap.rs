@@ -1,6 +1,6 @@
-use std::{collections::VecDeque, mem};
 use ratatui::layout::Alignment;
 use ratatui::text::StyledGrapheme;
+use std::{collections::VecDeque, mem};
 use unicode_segmentation::UnicodeSegmentation;
 use unicode_width::UnicodeWidthStr;
 
