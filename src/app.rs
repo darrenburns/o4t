@@ -28,27 +28,29 @@ pub struct WordAttempt {
 #[derive(Debug, Default)]
 pub struct Score {
     // Number of characters matching what they should be at the current point in time.
-    pub character_matches: u16,
+    pub character_matches: usize,
     // Number of characters which don't match what they should be at the current point in time.
     // This value can decrease if the user corrects a typo.
-    pub character_mismatches: u16,
+    pub character_mismatches: usize,
     // The number of correctly typed characters in this session. Always increasing.
-    pub character_hits: u16,
+    pub character_hits: usize,
     // The number of characters which were typed which shouldn't have been in this session.
     // This number cannot decrease. If you make a typo, it remains in this value.
-    pub character_misses: u16,
+    pub character_misses: usize,
     // The ratio of character_hits / character_hits + character_misses
     pub accuracy: f32,
     // Number of characters typed per minute.
     pub chars_per_minute: f32,
+    // WPM = (character_matches * 5) * (60 / session_length_secs)
+    pub wpm: f32,
     // Number of words typed CORRECTLY per minute.
-    pub words_per_minute: f32,
+    pub real_words_per_minute: f32,
     // Total number of CORRECTLY typed words.
-    pub num_words: u16,
+    pub num_words: usize,
     // The number of words typed correctly in a row. Always increasing. Words that were typed
     // incorrectly then changed don't count.
-    pub best_char_streak: u16,
-    pub current_char_streak: u16,
+    pub best_char_streak: usize,
+    pub current_char_streak: usize,
 
 }
 
@@ -112,7 +114,7 @@ impl App {
             load_words_effect: load_words_effect(),
             load_results_screen_effect: load_results_screen_effect(),
             last_tick_duration: Duration::ZERO,
-            is_debug_mode: true,  // TODO - make cli switch
+            is_debug_mode: false,  // TODO - make cli switch
             debug_string: "".to_string(),
             log_file,
         }
@@ -135,9 +137,9 @@ impl App {
     }
 
     pub fn refresh_internal_score(&mut self) {
-        let mut character_matches: u16 = 0;
-        let mut character_mismatches: u16 = 0;
-        let mut num_correct_words = 0;
+        let mut character_matches: usize = 0;
+        let mut character_mismatches: usize = 0;
+        let mut num_correct_words: usize = 0;
 
         // Count hits and misses
         for (index, attempt) in self.words.iter().enumerate() {
@@ -167,12 +169,16 @@ impl App {
         let accuracy =
             (character_hits as f32).div(character_hits.saturating_add(character_misses) as f32);
 
-        let num_chars: u16 = character_matches.saturating_add(character_mismatches);
+        let num_chars = character_matches.saturating_add(character_mismatches);
 
         // Chars and words per minute
-        let minutes_elapsed = (self.game_time_elapsed_millis() as f32) / 1000. / 60.;
+        let seconds_elapsed = (self.game_time_elapsed_millis() as f32) / 1000.;
+        let minutes_elapsed = seconds_elapsed / 60.;
         let chars_per_minute = num_chars as f32 / minutes_elapsed;
-        let words_per_minute = num_correct_words as f32 / minutes_elapsed;
+        let real_words_per_minute = num_correct_words as f32 / minutes_elapsed;
+        // We add the current_word_offset below as it represents the number of spaces, which should
+        // be included in the WPM calculation.
+        let wpm = ((character_matches + self.current_word_offset) as f32 / 5.) * (60. / seconds_elapsed); 
 
         self.score = Score {
             character_matches,
@@ -181,7 +187,8 @@ impl App {
             character_misses: self.score.character_misses,
             accuracy,
             chars_per_minute,
-            words_per_minute,
+            wpm,
+            real_words_per_minute,
             num_words: num_correct_words,
             best_char_streak: self.score.best_char_streak,
             current_char_streak: self.score.current_char_streak,

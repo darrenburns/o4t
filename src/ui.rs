@@ -265,7 +265,7 @@ fn build_results_screen(screen_frame: &mut Frame, app: &mut App) {
     let score = &app.score;
     let score_data = vec![
         ResultData {
-            value: format!("{:.0} ", score.words_per_minute),
+            value: format!("{:.0} ", score.wpm),
             subtext: "wpm".to_string(),
         },
         ResultData {
@@ -353,8 +353,8 @@ fn build_footer(
         } else {
             empty_score_placeholder.to_string()
         };
-        let wpm = if app.game_active && !score.words_per_minute.is_nan() {
-            format!("{:.0}", score.words_per_minute)
+        let wpm = if app.game_active && !score.wpm.is_nan() {
+            format!("{:.0}", score.wpm)
         } else {
             empty_score_placeholder.to_string()
         };
