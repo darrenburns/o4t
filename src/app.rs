@@ -12,11 +12,10 @@ use tachyonfx::{Effect, fx};
 pub enum Screen {
     Game,
     Results,
-    Info,
 }
 
 const NUMBER_OF_WORDS_TO_PICK: usize = 500;
-const DEFAULT_GAME_LENGTH: Duration = Duration::from_secs(30);
+const DEFAULT_GAME_LENGTH: Duration = Duration::from_secs(8);
 
 #[derive(Debug, PartialOrd, PartialEq)]
 pub struct WordAttempt {

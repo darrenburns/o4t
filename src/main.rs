@@ -22,7 +22,6 @@ mod ui;
 mod words;
 mod wrap;
 mod theme;
-
 fn main() -> Result<(), Box<dyn Error>> {
     enable_raw_mode()?;
     let mut stderr = io::stderr();
@@ -119,7 +118,7 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
                         if ctrl && char == 'w' {
                             app.current_user_input = String::new();
                         }
-                        
+
                         let current_word = &app.words[app.current_word_offset].word;
                         let cursor_offset = app.current_user_input.len();
                         let expected_char = current_word.chars().nth(cursor_offset);

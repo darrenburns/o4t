@@ -57,7 +57,6 @@ pub fn ui(screen_frame: &mut Frame, app: &mut App) {
     match app.current_screen {
         Screen::Game => build_game_screen(screen_frame, app),
         Screen::Results => build_score_screen(screen_frame, app),
-        Screen::Info => {}
     }
 }
 
@@ -174,7 +173,8 @@ fn build_game_screen(screen_frame: &mut Frame, app: &mut App) {
 
     // When the game is almost over, we underline the timer.
     if game_time_remaining_secs <= 3 {
-        timer_style = timer_style.add_modifier(Modifier::UNDERLINED);
+        timer_style = timer_style
+            .add_modifier(Modifier::UNDERLINED);
     }
 
     let game_timer = Paragraph::new(Text::styled(
