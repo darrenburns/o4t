@@ -65,7 +65,7 @@ fn build_game_screen(screen_frame: &mut Frame, app: &mut App) {
         .direction(Direction::Vertical)
         .constraints([
             Length(1), // Header
-            Min(6),    // Body (1 timer row, 5 lines of text)
+            Min(7),    // Body (1 timer row, 6 lines of text)
             Length(1), // Footer
         ])
         .split(screen_frame.area());
@@ -146,14 +146,14 @@ fn build_game_screen(screen_frame: &mut Frame, app: &mut App) {
         }
     }
 
-    // The body has 2 rows - a single cell height row for the timer, and 5 rows for the text to type
+    // The body has 2 rows - a single cell height row for the timer, and 6 rows for the text to type
     let centered_body = center(
         screen_sections[1],
         Length(screen_frame.area().width),
-        Length(6), // 1 timer row, 5 lines of text
+        Length(7), // 1 timer row, 6 lines of text
     );
     let [timer_section, words_section] =
-        Layout::vertical([Length(1), Min(5)]).areas::<2>(centered_body);
+        Layout::vertical([Length(1), Min(6)]).areas::<2>(centered_body);
 
     let h_pad = 8;
     // The game timer - shows as dim until the game starts.
@@ -201,13 +201,8 @@ fn build_game_screen(screen_frame: &mut Frame, app: &mut App) {
     let mut cursor_row = 0;
     let mut cursor_found = false;
     let mut wrapped_lines = vec![];
+    let mut line_alpha = 1.0;
     while let Some(wrapped_line) = wrapper.next_line() {
-        let line_alpha = match row {
-            4 => 0.2,
-            3 => 0.6,
-            _ => 1.0,
-        };
-
         let line_symbols = wrapped_line
             .line
             .iter()
@@ -233,6 +228,11 @@ fn build_game_screen(screen_frame: &mut Frame, app: &mut App) {
                     cursor_found = true;
                 }
             }
+        }
+
+        // Start dimming towards the bottom
+        if cursor_found && row > cursor_row && row > 2{
+            line_alpha -= 0.4;
         }
         row += 1;
     }

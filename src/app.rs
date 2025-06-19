@@ -16,7 +16,7 @@ pub enum Screen {
 }
 
 const NUMBER_OF_WORDS_TO_PICK: usize = 500;
-const DEFAULT_GAME_LENGTH: Duration = Duration::from_secs(8);
+const DEFAULT_GAME_LENGTH: Duration = Duration::from_secs(20);
 
 #[derive(Debug, PartialOrd, PartialEq)]
 pub struct WordAttempt {
@@ -121,7 +121,7 @@ impl App {
             last_tick_duration: Duration::ZERO,
             is_debug_mode: false, // TODO - make cli switch
             debug_string: "".to_string(),
-            theme: Rc::new(get_theme("nord")),
+            theme: Rc::new(get_theme("monokai")),
             cursor_style: CursorType::Underline,
         }
     }
