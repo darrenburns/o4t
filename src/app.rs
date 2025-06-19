@@ -131,7 +131,7 @@ impl App {
     }
 
     pub fn game_time_remaining_millis(&self) -> u64 {
-        (DEFAULT_GAME_LENGTH.as_millis() as u64).saturating_sub(self.game_time_elapsed_millis())
+        (self.time_remaining.as_millis() as u64).saturating_sub(self.game_time_elapsed_millis())
     }
 
     pub fn refresh_internal_score(&mut self) {
