@@ -3,7 +3,7 @@ use rand::seq::IteratorRandom;
 use std::ops::Div;
 use std::time::Duration;
 use tachyonfx::Interpolation::QuadOut;
-use tachyonfx::{fx, Effect};
+use tachyonfx::{Effect, fx};
 
 pub enum Screen {
     Game,
@@ -59,11 +59,6 @@ impl WordAttempt {
     }
 }
 
-#[derive(Debug, Default)]
-pub struct ScoreScreenState {
-    pub menu_index: usize,
-}
-
 // Holds the state for the app
 pub struct App {
     // the current input the user has typed while trying to type words[0]
@@ -82,12 +77,10 @@ pub struct App {
     pub load_results_screen_effect: Effect,
     pub load_words_effect: Effect,
     pub last_tick_duration: Duration,
-    
+
     pub is_debug_mode: bool,
     // Debug string that can be rendered to screen
     pub debug_string: String,
-    
-    pub score_screen_state: ScoreScreenState,
 }
 
 pub fn load_words_effect() -> Effect {
@@ -113,9 +106,8 @@ impl App {
             load_words_effect: load_words_effect(),
             load_results_screen_effect: load_results_screen_effect(),
             last_tick_duration: Duration::ZERO,
-            is_debug_mode: false,  // TODO - make cli switch
+            is_debug_mode: false, // TODO - make cli switch
             debug_string: "".to_string(),
-            score_screen_state: ScoreScreenState::default(),
         }
     }
 
@@ -177,7 +169,8 @@ impl App {
         let real_words_per_minute = num_correct_words as f32 / minutes_elapsed;
         // We add the current_word_offset below as it represents the number of spaces, which should
         // be included in the WPM calculation.
-        let wpm = ((character_matches + self.current_word_offset) as f32 / 5.) * (60. / seconds_elapsed);
+        let wpm =
+            ((character_matches + self.current_word_offset) as f32 / 5.) * (60. / seconds_elapsed);
 
         self.score = Score {
             character_matches,
