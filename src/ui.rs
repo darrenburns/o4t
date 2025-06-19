@@ -22,7 +22,6 @@ use ratatui::{
     Frame,
 };
 use std::cmp::max;
-use std::ops::Add;
 use std::rc::Rc;
 use tachyonfx::{EffectRenderer, Shader};
 use unicode_width::UnicodeWidthStr;

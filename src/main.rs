@@ -13,7 +13,7 @@ use std::cmp::max;
 use std::error::Error;
 use std::time::Instant;
 use std::{io, thread};
-use tachyonfx::{Duration, IntoEffect, Shader};
+use tachyonfx::Duration;
 use tokio::sync::mpsc;
 use tokio::time::interval;
 

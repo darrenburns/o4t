@@ -7,7 +7,7 @@ use std::ops::Div;
 use std::rc::Rc;
 use std::time::Duration;
 use tachyonfx::Interpolation::QuadOut;
-use tachyonfx::{Effect, fx};
+use tachyonfx::{fx, Effect};
 
 pub enum Screen {
     Game,
