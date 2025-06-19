@@ -390,7 +390,6 @@ fn build_footer(
             empty_score_placeholder.to_string()
         };
 
-        let (matches, mismatches) = (score.character_matches, score.character_mismatches);
         let score_text = Line::from(vec![
             Span::raw("acc "),
             Span::raw(accuracy).fg(app.theme.fg).dim(),
