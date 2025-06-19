@@ -47,7 +47,6 @@ pub fn ui(screen_frame: &mut Frame, app: &mut App) {
         Screen::Game => build_game_screen(screen_frame, app),
         Screen::Results => build_score_screen(screen_frame, app),
         Screen::Info => {}
-        Screen::Exiting => {}
     }
 }
 
@@ -117,7 +116,6 @@ fn build_game_screen(screen_frame: &mut Frame, app: &mut App) {
         } else if user_attempt.is_empty() {
             // It's not the current word, and there's no attempt yet, basic rendering.
             let current_word_span = Span::styled(word, char_style);
-            let span_width = current_word_span.width();
             words_text.push_span(current_word_span);
             if index != words.len() - 1 {
                 words_text.push_span(Span::default().content(" "));

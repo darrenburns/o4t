@@ -9,7 +9,6 @@ pub enum Screen {
     Game,
     Results,
     Info,
-    Exiting,
 }
 
 const NUMBER_OF_WORDS_TO_PICK: usize = 500;
