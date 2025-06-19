@@ -121,7 +121,7 @@ impl App {
             last_tick_duration: Duration::ZERO,
             is_debug_mode: false, // TODO - make cli switch
             debug_string: "".to_string(),
-            theme: Rc::new(get_theme("gruvbox")),
+            theme: Rc::new(get_theme("galaxy")),
             cursor_style: CursorType::Underline,
         }
     }
@@ -300,8 +300,8 @@ fn get_theme(theme_name: &str) -> Theme {
                 fg: Color::from_u32(0xC0CAF5),      // fg
                 bg: Color::from_u32(0x1A1B26),      // bg
                 primary: Color::from_u32(0x7AA2F7), // blue
-                secondary: Color::from_u32(0xBB9AF7), // magenta
-                error: Color::from_u32(0xff9e64),   // red
+                secondary: Color::from_u32(0xff9e64), // magenta
+                error: Color::from_u32(0xf7768e),   // red
             },
         ),
         (
@@ -313,6 +313,17 @@ fn get_theme(theme_name: &str) -> Theme {
                 primary: Color::from_u32(0xF92672),   // pink
                 secondary: Color::from_u32(0xA6E22E), // green
                 error: Color::from_u32(0xF92672),     // pink also serves well as error color
+            },
+        ),
+        (
+            "galaxy",  // from Posting
+            Theme {
+                name: "galaxy",
+                fg: Color::from_u32(0xC0CAF5),
+                bg: Color::from_u32(0x0F0F1F),
+                primary: Color::from_u32(0xC45AFF),
+                secondary: Color::from_u32(0xa684e8),
+                error: Color::from_u32(0xFF4500),
             },
         ),
     ]);

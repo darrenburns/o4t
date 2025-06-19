@@ -4,7 +4,7 @@ use crate::wrap::{LineComposer, WordWrapper};
 use ratatui::buffer::Buffer;
 use ratatui::layout::Constraint::Max;
 use ratatui::layout::Flex::Center;
-use ratatui::layout::{Alignment, Margin};
+use ratatui::layout::{Alignment, Margin, Offset};
 use ratatui::prelude::{Line, Widget};
 use ratatui::style::{Color, Stylize};
 use ratatui::widgets::Clear;
@@ -495,7 +495,10 @@ fn build_styled_word(
 
 fn center(area: Rect, horizontal: Constraint, vertical: Constraint) -> Rect {
     let [area] = Layout::horizontal([horizontal]).flex(Center).areas(area);
-    let [area] = Layout::vertical([vertical]).flex(Center).areas(area);
+    let [area] = Layout::vertical([vertical])
+        .flex(Center)
+        .areas(area)
+        .map(|rect| rect.offset(Offset { x: 0, y: -1 }));
     area
 }
 
