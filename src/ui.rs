@@ -6,24 +6,23 @@ use ratatui::layout::Constraint::Max;
 use ratatui::layout::Flex::Center;
 use ratatui::layout::{Alignment, Margin};
 use ratatui::prelude::{Line, Widget};
-use ratatui::style::Stylize;
+use ratatui::style::{Color, Stylize};
 use ratatui::widgets::Clear;
 use ratatui::{
+    Frame,
     layout::Constraint,
     layout::Constraint::{Length, Min},
     layout::Direction,
-    layout::Flex,
     layout::Flex::SpaceBetween,
     layout::Layout,
     layout::Rect,
     style::{Modifier, Style},
     text::{Span, Text},
     widgets::{Block, Padding, Paragraph, Wrap},
-    Frame,
 };
-use std::cmp::max;
+use std::cmp::{max, min};
 use std::rc::Rc;
-use tachyonfx::{EffectRenderer, Shader};
+use tachyonfx::{EffectRenderer, Shader, ToRgbComponents};
 use unicode_width::UnicodeWidthStr;
 
 #[derive(Default, Debug)]
@@ -172,8 +171,7 @@ fn build_game_screen(screen_frame: &mut Frame, app: &mut App) {
 
     // When the game is almost over, we underline the timer.
     if game_time_remaining_secs <= 3 {
-        timer_style = timer_style
-            .add_modifier(Modifier::UNDERLINED);
+        timer_style = timer_style.add_modifier(Modifier::UNDERLINED);
     }
 
     let game_timer = Paragraph::new(Text::styled(
@@ -204,10 +202,26 @@ fn build_game_screen(screen_frame: &mut Frame, app: &mut App) {
     let mut cursor_found = false;
     let mut wrapped_lines = vec![];
     while let Some(wrapped_line) = wrapper.next_line() {
+        let line_alpha = match row {
+            4 => 0.2,
+            3 => 0.6,
+            _ => 1.0,
+        };
+
         let line_symbols = wrapped_line
             .line
             .iter()
-            .map(|grapheme| Span::styled(grapheme.symbol, grapheme.style))
+            .map(|grapheme| {
+                Span::styled(
+                    grapheme.symbol,
+                    grapheme.style.patch(
+                        grapheme
+                            .style
+                            .fg
+                            .map_or(app.theme.fg, |fg| blend_colors(fg, app.theme.bg, line_alpha))
+                    )
+                )
+            })
             .collect::<Line>();
 
         wrapped_lines.push(line_symbols);
@@ -257,7 +271,7 @@ fn build_header(app: &App) -> Paragraph<'static> {
         Style::default()
             .fg(app.theme.fg)
             .add_modifier(Modifier::DIM)
-            .remove_modifier(Modifier::BOLD)
+            .remove_modifier(Modifier::BOLD),
     );
     let title = Paragraph::new(title_text).block(header_block);
     title
@@ -355,7 +369,9 @@ fn build_footer(
         .bg(app.theme.bg);
 
     let key_style = Style::default().add_modifier(Modifier::BOLD);
-    let value_style = Style::default().fg(app.theme.fg).add_modifier(Modifier::DIM);
+    let value_style = Style::default()
+        .fg(app.theme.fg)
+        .add_modifier(Modifier::DIM);
     let mut keys = Line::from(vec![
         Span::styled("ESC ", key_style),
         Span::styled("quit  ", value_style),
@@ -476,24 +492,47 @@ fn build_styled_word(
 }
 
 fn center(area: Rect, horizontal: Constraint, vertical: Constraint) -> Rect {
-    let [area] = Layout::horizontal([horizontal])
-        .flex(Center)
-        .areas(area);
+    let [area] = Layout::horizontal([horizontal]).flex(Center).areas(area);
     let [area] = Layout::vertical([vertical]).flex(Center).areas(area);
     area
 }
 
 fn center_vertical(area: Rect, height: u16) -> Rect {
-    let [area] = Layout::vertical([Length(height)])
-        .flex(Center)
-        .areas(area);
+    let [area] = Layout::vertical([Length(height)]).flex(Center).areas(area);
     area
 }
 
 fn cursor_type_to_ratatui_style(cursor_style: &CursorType, app: &App) -> Style {
     match cursor_style {
         CursorType::Block => Style::default().fg(app.theme.bg).bg(app.theme.secondary),
-        CursorType::Underline => Style::default().underlined().underline_color(app.theme.secondary),
-        CursorType::None => Style::default()
+        CursorType::Underline => Style::default()
+            .underlined()
+            .underline_color(app.theme.secondary),
+        CursorType::None => Style::default(),
     }
+}
+
+/// Blends a foreground color over a background color using a given alpha.
+///
+/// - `fg`: The foreground color.
+/// - `bg`: The background color.
+/// - `alpha`: The opacity of the foreground color, from 0.0 (fully transparent)
+///   to 1.0 (fully opaque).
+///
+/// Returns the resulting blended `Color`.
+fn blend_colors(fg: Color, bg: Color, alpha: f32) -> Color {
+    let fg_rgb = fg.to_rgb();
+    let bg_rgb = bg.to_rgb();
+
+    // Clamp alpha to the valid range [0.0, 1.0] to prevent invalid calculations.
+    let alpha = alpha.clamp(0.0, 1.0);
+    let beta = 1.0 - alpha; // The inverse of alpha, for the background.
+
+    // Perform alpha blending for each channel.
+    // The formula is: output = (foreground * alpha) + (background * (1.0 - alpha))
+    let r = (fg_rgb.0 as f32 * alpha + bg_rgb.0 as f32 * beta).round() as u8;
+    let g = (fg_rgb.1 as f32 * alpha + bg_rgb.1 as f32 * beta).round() as u8;
+    let b = (fg_rgb.2 as f32 * alpha + bg_rgb.2 as f32 * beta).round() as u8;
+
+    Color::Rgb(r, g, b)
 }
