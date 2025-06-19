@@ -65,7 +65,7 @@ fn build_game_screen(screen_frame: &mut Frame, app: &mut App) {
         .direction(Direction::Vertical)
         .constraints([
             Length(1), // Header
-            Min(7),    // Body (1 timer row, 6 lines of text)
+            Min(7),    // Body (timer row, plus text)
             Length(1), // Footer
         ])
         .split(screen_frame.area());
@@ -146,19 +146,22 @@ fn build_game_screen(screen_frame: &mut Frame, app: &mut App) {
         }
     }
 
-    // The body has 2 rows - a single cell height row for the timer, and 6 rows for the text to type
+    // The body has 2 rows - a single cell height row for the timer, and 5 rows for the text to type
     let centered_body = center(
         screen_sections[1],
         Length(screen_frame.area().width),
         Length(7), // 1 timer row, 6 lines of text
     );
-    let [timer_section, words_section] =
-        Layout::vertical([Length(1), Min(6)]).areas::<2>(centered_body);
 
+    // Split the centered rows into space for the timer and space for the challenge words.
+    let [timer_section, words_section] =
+        Layout::vertical([Length(1), Min(5)]).areas::<2>(centered_body);
+
+    // Horizontal padding for the centered content (timer + challenge words).
     let h_pad = 8;
+
     // The game timer - shows as dim until the game starts.
     let game_time_remaining_secs = app.game_time_remaining_millis().div_ceil(1000);
-
     let mut timer_style = Style::default()
         .fg(app.theme.primary)
         .add_modifier(Modifier::DIM);
@@ -231,7 +234,7 @@ fn build_game_screen(screen_frame: &mut Frame, app: &mut App) {
 
         // Start dimming towards the bottom
         if cursor_found && row > cursor_row && row > 2 {
-            line_alpha -= 0.4;
+            line_alpha -= 0.42;
         }
         row += 1;
     }

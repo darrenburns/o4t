@@ -121,7 +121,7 @@ impl App {
             last_tick_duration: Duration::ZERO,
             is_debug_mode: false, // TODO - make cli switch
             debug_string: "".to_string(),
-            theme: Rc::new(get_theme("monokai")),
+            theme: Rc::new(get_theme("gruvbox")),
             cursor_style: CursorType::Underline,
         }
     }

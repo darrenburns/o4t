@@ -75,9 +75,6 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
 
         if let Ok(millis_elapsed) = rx.try_recv() {
             app.current_millis = millis_elapsed;
-            if app.game_active {
-                app.refresh_internal_score();
-            }
             if app.game_time_remaining_millis() == 0 {
                 app.load_results_screen_effect = load_results_screen_effect();
                 app.game_active = false;
@@ -94,6 +91,7 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
                 continue;
             }
 
+
             match key.code {
                 KeyCode::Esc => return Ok(true),
                 KeyCode::Tab => app.reset_game(),
@@ -103,6 +101,10 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
             let ctrl = key.modifiers.contains(KeyModifiers::CONTROL);
             let alt = key.modifiers.contains(KeyModifiers::ALT);
 
+            if app.game_active {
+                app.refresh_internal_score();
+            }
+            
             match app.current_screen {
                 Screen::Game => match key.code {
                     // Pressing any character, while the game hasn't started, starts the game
