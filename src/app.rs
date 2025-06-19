@@ -6,6 +6,7 @@ use std::collections::HashMap;
 use std::ops::Div;
 use std::rc::Rc;
 use std::time::Duration;
+use ratatui::style::{Style, Stylize};
 use tachyonfx::Interpolation::QuadOut;
 use tachyonfx::{fx, Effect};
 
@@ -86,6 +87,7 @@ pub struct App {
     pub debug_string: String,
 
     pub theme: Rc<Theme>,
+    pub cursor_style: CursorType,
 }
 
 pub fn load_words_effect() -> Effect {
@@ -94,6 +96,12 @@ pub fn load_words_effect() -> Effect {
 
 pub fn load_results_screen_effect() -> Effect {
     fx::coalesce((180, QuadOut))
+}
+
+pub enum CursorType {
+    Block,
+    Underline,
+    None,
 }
 
 impl App {
@@ -113,7 +121,8 @@ impl App {
             last_tick_duration: Duration::ZERO,
             is_debug_mode: false, // TODO - make cli switch
             debug_string: "".to_string(),
-            theme: Rc::new(get_theme("tokyo-night")),
+            theme: Rc::new(get_theme("gruvbox")),
+            cursor_style: CursorType::Underline,
         }
     }
 
@@ -205,6 +214,7 @@ fn generate_words() -> Vec<WordAttempt> {
 }
 
 fn get_theme(theme_name: &str) -> Theme {
+    let default_cursor_style = Style::default().underlined();
     let mut themes: HashMap<&str, Theme> = HashMap::from([
         (
             "terminal-yellow",

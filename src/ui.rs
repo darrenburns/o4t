@@ -1,4 +1,4 @@
-use crate::app::{App, Screen};
+use crate::app::{App, CursorType, Screen};
 use crate::theme::Theme;
 use crate::wrap::{LineComposer, WordWrapper};
 use ratatui::buffer::Buffer;
@@ -118,7 +118,7 @@ fn build_game_screen(screen_frame: &mut Frame, app: &mut App) {
             if app.current_user_input.len() >= word.len() {
                 words_text.push_span(Span::styled(
                     " ",
-                    Style::default().add_modifier(Modifier::UNDERLINED),
+                    Style::default().patch(cursor_type_to_ratatui_style(&app.cursor_style, app)),
                 ))
             } else {
                 words_text.push_span(Span::default().content(" "));
@@ -447,7 +447,7 @@ fn build_styled_word(
         if is_current_word {
             missed_chars_span = Span::styled(
                 cursor_char.to_string(),
-                char_style.add_modifier(Modifier::UNDERLINED),
+                char_style.patch(cursor_type_to_ratatui_style(&app.cursor_style, app)),
             );
             total_offset += missed_chars_span.width();
             words_text.push_span(missed_chars_span);
@@ -477,15 +477,23 @@ fn build_styled_word(
 
 fn center(area: Rect, horizontal: Constraint, vertical: Constraint) -> Rect {
     let [area] = Layout::horizontal([horizontal])
-        .flex(Flex::Center)
+        .flex(Center)
         .areas(area);
-    let [area] = Layout::vertical([vertical]).flex(Flex::Center).areas(area);
+    let [area] = Layout::vertical([vertical]).flex(Center).areas(area);
     area
 }
 
 fn center_vertical(area: Rect, height: u16) -> Rect {
     let [area] = Layout::vertical([Length(height)])
-        .flex(Flex::Center)
+        .flex(Center)
         .areas(area);
     area
+}
+
+fn cursor_type_to_ratatui_style(cursor_style: &CursorType, app: &App) -> Style {
+    match cursor_style {
+        CursorType::Block => Style::default().fg(app.theme.bg).bg(app.theme.secondary),
+        CursorType::Underline => Style::default().underlined().underline_color(app.theme.secondary),
+        CursorType::None => Style::default()
+    }
 }

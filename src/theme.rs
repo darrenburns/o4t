@@ -1,4 +1,4 @@
-use ratatui::style::Color;
+use ratatui::style::{Color, Style};
 
 #[derive(Default, Clone, Debug)]
 pub struct Theme {
