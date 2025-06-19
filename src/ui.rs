@@ -209,12 +209,11 @@ fn build_game_screen(screen_frame: &mut Frame, app: &mut App) {
             .map(|grapheme| {
                 Span::styled(
                     grapheme.symbol,
-                    grapheme.style.patch(
-                        grapheme
-                            .style
-                            .fg
-                            .map_or(app.theme.fg, |fg| blend_colors(fg, app.theme.bg, line_alpha))
-                    )
+                    grapheme
+                        .style
+                        .patch(grapheme.style.fg.map_or(app.theme.fg, |fg| {
+                            blend_colors(fg, app.theme.bg, line_alpha)
+                        })),
                 )
             })
             .collect::<Line>();
@@ -231,7 +230,7 @@ fn build_game_screen(screen_frame: &mut Frame, app: &mut App) {
         }
 
         // Start dimming towards the bottom
-        if cursor_found && row > cursor_row && row > 2{
+        if cursor_found && row > cursor_row && row > 2 {
             line_alpha -= 0.4;
         }
         row += 1;
