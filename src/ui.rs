@@ -6,8 +6,9 @@ use ratatui::layout::Constraint::Max;
 use ratatui::layout::Flex::Center;
 use ratatui::layout::{Alignment, Margin};
 use ratatui::prelude::{Line, Widget};
+use ratatui::style::Stylize;
+use ratatui::widgets::Clear;
 use ratatui::{
-    Frame,
     layout::Constraint,
     layout::Constraint::{Length, Min},
     layout::Direction,
@@ -15,11 +16,13 @@ use ratatui::{
     layout::Flex::SpaceBetween,
     layout::Layout,
     layout::Rect,
-    style::{Color, Modifier, Style},
+    style::{Modifier, Style},
     text::{Span, Text},
     widgets::{Block, Padding, Paragraph, Wrap},
+    Frame,
 };
 use std::cmp::max;
+use std::ops::Add;
 use std::rc::Rc;
 use tachyonfx::{EffectRenderer, Shader};
 use unicode_width::UnicodeWidthStr;
@@ -35,7 +38,7 @@ impl Widget for ResultData {
     fn render(self, area: Rect, buf: &mut Buffer) {
         let key_style = Style::default().add_modifier(Modifier::DIM);
         let value_style = Style::default()
-            .fg(self.theme.accent)
+            .fg(self.theme.primary)
             .add_modifier(Modifier::BOLD);
         let text = Text::from(vec![
             Line::styled(self.value, value_style),
@@ -46,6 +49,11 @@ impl Widget for ResultData {
 }
 
 pub fn ui(screen_frame: &mut Frame, app: &mut App) {
+    Clear.render(screen_frame.area(), screen_frame.buffer_mut());
+    Block::default()
+        .fg(app.theme.fg)
+        .bg(app.theme.bg)
+        .render(screen_frame.area(), screen_frame.buffer_mut());
     match app.current_screen {
         Screen::Game => build_game_screen(screen_frame, app),
         Screen::Results => build_score_screen(screen_frame, app),
@@ -68,7 +76,7 @@ fn build_game_screen(screen_frame: &mut Frame, app: &mut App) {
     // Header (actual render call is at bottom since we may need to include debug info).
     if app.is_debug_mode {
         let debug_text = Line::from(vec![Span::raw("debug: "), Span::raw(&app.debug_string)]);
-        let header = Paragraph::new(debug_text);
+        let header = Paragraph::new(debug_text).bg(app.theme.bg);
         screen_frame.render_widget(header, screen_sections[0]);
     } else {
         let header = build_header(app);
@@ -86,7 +94,7 @@ fn build_game_screen(screen_frame: &mut Frame, app: &mut App) {
     let mut cursor_offset = 0;
     for (index, word) in words.iter().enumerate() {
         let mut char_style = Style::default()
-            .fg(Color::Reset)
+            .fg(app.theme.fg)
             .add_modifier(Modifier::DIM);
         let user_attempt = &app.words[index].user_attempt;
 
@@ -153,9 +161,11 @@ fn build_game_screen(screen_frame: &mut Frame, app: &mut App) {
     let h_pad = 8;
     // The game timer - shows as dim until the game starts.
     let game_time_remaining_secs = app.game_time_remaining_millis().div_ceil(1000);
+
     let mut timer_style = Style::default()
-        .fg(app.theme.accent)
+        .fg(app.theme.primary)
         .add_modifier(Modifier::DIM);
+
     if app.game_active {
         timer_style = timer_style
             .add_modifier(Modifier::BOLD)
@@ -171,6 +181,7 @@ fn build_game_screen(screen_frame: &mut Frame, app: &mut App) {
         game_time_remaining_secs.to_string(),
         timer_style,
     ))
+    .bg(app.theme.bg)
     .block(Block::default().padding(Padding::horizontal(h_pad)));
     screen_frame.render_widget(game_timer, timer_section);
 
@@ -233,19 +244,22 @@ fn build_game_screen(screen_frame: &mut Frame, app: &mut App) {
 }
 
 fn build_header(app: &App) -> Paragraph<'static> {
-    let header_block = Block::default().padding(Padding::horizontal(1));
-    let mut title_text = Text::styled(
+    let header_block = Block::default()
+        .padding(Padding::horizontal(1))
+        .bg(app.theme.bg);
+    let mut title_text = Line::styled(
         "o4t ",
         Style::default()
-            .fg(app.theme.accent)
+            .fg(app.theme.primary)
             .add_modifier(Modifier::BOLD),
     );
-    title_text.push_span(Span::styled(
+    title_text += Span::styled(
         env!("CARGO_PKG_VERSION"),
         Style::default()
+            .fg(app.theme.fg)
+            .add_modifier(Modifier::DIM)
             .remove_modifier(Modifier::BOLD)
-            .add_modifier(Modifier::DIM),
-    ));
+    );
     let title = Paragraph::new(title_text).block(header_block);
     title
 }
@@ -336,12 +350,13 @@ fn build_footer(
         .flex(SpaceBetween)
         .areas(sections[2]);
 
-    let keys_block = Block::default().padding(Padding::left(1));
+    let keys_block = Block::default()
+        .padding(Padding::left(1))
+        .fg(app.theme.primary)
+        .bg(app.theme.bg);
 
-    let key_style = Style::default()
-        .fg(app.theme.accent)
-        .add_modifier(Modifier::BOLD);
-    let value_style = Style::default().add_modifier(Modifier::DIM);
+    let key_style = Style::default().add_modifier(Modifier::BOLD);
+    let value_style = Style::default().fg(app.theme.fg).add_modifier(Modifier::DIM);
     let mut keys = Line::from(vec![
         Span::styled("ESC ", key_style),
         Span::styled("quit  ", value_style),
@@ -359,7 +374,11 @@ fn build_footer(
     if show_scoring {
         let empty_score_placeholder = "-";
         let score = &app.score;
-        let score_block = Block::default().padding(Padding::right(1));
+        let score_block = Block::default()
+            .padding(Padding::right(1))
+            .fg(app.theme.primary)
+            .bg(app.theme.bg);
+
         let accuracy = if app.game_active && !score.accuracy.is_nan() {
             format!("{:.0}%", score.accuracy * 100.0)
         } else {
@@ -370,14 +389,16 @@ fn build_footer(
         } else {
             empty_score_placeholder.to_string()
         };
-        let score_string = format!(
-            "{}/{} · acc: {} · wpm: {}",
-            score.character_matches.to_string(),
-            score.character_mismatches.to_string(),
-            accuracy,
-            wpm,
-        );
-        let score_text = Text::styled(score_string, Style::default().fg(app.theme.accent));
+
+        let (matches, mismatches) = (score.character_matches, score.character_mismatches);
+        let score_text = Line::from(vec![
+            Span::raw("acc "),
+            Span::raw(accuracy).fg(app.theme.fg).dim(),
+            Span::raw("  ").fg(app.theme.fg).dim(),
+            Span::raw("wpm "),
+            Span::raw(wpm).fg(app.theme.fg).dim(),
+        ]);
+        let score_text = Text::from(score_text);
         let score_paragraph = Paragraph::new(score_text)
             .alignment(Alignment::Right)
             .block(score_block);

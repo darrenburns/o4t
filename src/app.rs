@@ -114,7 +114,7 @@ impl App {
             last_tick_duration: Duration::ZERO,
             is_debug_mode: false, // TODO - make cli switch
             debug_string: "".to_string(),
-            theme: Rc::new(get_theme("terminal-yellow")),
+            theme: Rc::new(get_theme("tokyo-night")),
         }
     }
 
@@ -213,7 +213,8 @@ fn get_theme(theme_name: &str) -> Theme {
                 name: "terminal-yellow",
                 fg: Color::Reset,
                 bg: Color::Reset,
-                accent: Color::Yellow,
+                primary: Color::Yellow,
+                secondary: Color::Yellow,
                 error: Color::Red,
             },
         ),
@@ -223,8 +224,86 @@ fn get_theme(theme_name: &str) -> Theme {
                 name: "terminal-cyan",
                 fg: Color::White,
                 bg: Color::Blue,
-                accent: Color::Cyan,
+                primary: Color::Cyan,
+                secondary: Color::Cyan,
                 error: Color::Yellow,
+            },
+        ),
+        (
+            "nord",
+            Theme {
+                name: "nord",
+                fg: Color::from_u32(0xD8DEE9),     // nord4
+                bg: Color::from_u32(0x2E3440),     // nord0
+                primary: Color::from_u32(0x88C0D0), // nord8
+                secondary: Color::from_u32(0xB48EAD), // nord14
+                error: Color::from_u32(0xBF616A),  // nord11
+            },
+        ),
+        (
+            "catppuccin-mocha",
+            Theme {
+                name: "catppuccin-mocha",
+                fg: Color::from_u32(0xCDD6F4),     // Text
+                bg: Color::from_u32(0x1E1E2E),     // Base
+                primary: Color::from_u32(0x89B4FA), // Blue
+                secondary: Color::from_u32(0xCBA6F7), // Mauve
+                error: Color::from_u32(0xF38BA8),  // Red
+            },
+        ),
+        (
+            "dracula",
+            Theme {
+                name: "dracula",
+                fg: Color::from_u32(0xF8F8F2),     // Foreground
+                bg: Color::from_u32(0x282A36),     // Background
+                primary: Color::from_u32(0xBD93F9), // Purple
+                secondary: Color::from_u32(0x8BE9FD), // Cyan
+                error: Color::from_u32(0xFF5555),  // Red
+            },
+        ),
+        (
+            "gruvbox", // Using the dark variant
+            Theme {
+                name: "gruvbox",
+                fg: Color::from_u32(0xEBDBB2),     // fg1
+                bg: Color::from_u32(0x282828),     // bg0
+                primary: Color::from_u32(0xFABD2F), // yellow
+                secondary: Color::from_u32(0x8EC07C), // aqua
+                error: Color::from_u32(0xFB4934),  // red
+            },
+        ),
+        (
+            "solarized-dark",
+            Theme {
+                name: "solarized-dark",
+                fg: Color::from_u32(0x839496),      // base0
+                bg: Color::from_u32(0x002B36),      // base03
+                primary: Color::from_u32(0x268BD2), // blue
+                secondary: Color::from_u32(0x2AA198), // cyan
+                error: Color::from_u32(0xDC322F),   // red
+            },
+        ),
+        (
+            "tokyo-night",
+            Theme {
+                name: "tokyo-night",
+                fg: Color::from_u32(0xC0CAF5),      // fg
+                bg: Color::from_u32(0x1A1B26),      // bg
+                primary: Color::from_u32(0x7AA2F7), // blue
+                secondary: Color::from_u32(0xBB9AF7), // magenta
+                error: Color::from_u32(0xff9e64),   // red
+            },
+        ),
+        (
+            "monokai",
+            Theme {
+                name: "monokai",
+                fg: Color::from_u32(0xF8F8F2),
+                bg: Color::from_u32(0x272822),
+                primary: Color::from_u32(0xF92672),   // pink
+                secondary: Color::from_u32(0xA6E22E), // green
+                error: Color::from_u32(0xF92672),     // pink also serves well as error color
             },
         ),
     ]);
