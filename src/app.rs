@@ -1,6 +1,10 @@
+use crate::theme::Theme;
 use crate::words;
 use rand::seq::IteratorRandom;
+use ratatui::prelude::Color;
+use std::collections::HashMap;
 use std::ops::Div;
+use std::rc::Rc;
 use std::time::Duration;
 use tachyonfx::Interpolation::QuadOut;
 use tachyonfx::{Effect, fx};
@@ -81,6 +85,8 @@ pub struct App {
     pub is_debug_mode: bool,
     // Debug string that can be rendered to screen
     pub debug_string: String,
+
+    pub theme: Rc<Theme>,
 }
 
 pub fn load_words_effect() -> Effect {
@@ -108,6 +114,7 @@ impl App {
             last_tick_duration: Duration::ZERO,
             is_debug_mode: false, // TODO - make cli switch
             debug_string: "".to_string(),
+            theme: Rc::new(get_theme("terminal-yellow")),
         }
     }
 
@@ -196,4 +203,31 @@ fn generate_words() -> Vec<WordAttempt> {
         .iter()
         .map(|s| WordAttempt::new(s.to_string()))
         .collect()
+}
+
+fn get_theme(theme_name: &str) -> Theme {
+    let mut themes: HashMap<&str, Theme> = HashMap::from([
+        (
+            "terminal-yellow",
+            Theme {
+                name: "terminal-yellow",
+                fg: Color::Reset,
+                bg: Color::Reset,
+                accent: Color::Yellow,
+                error: Color::Red,
+            },
+        ),
+        (
+            "terminal-cyan",
+            Theme {
+                name: "terminal-cyan",
+                fg: Color::White,
+                bg: Color::Blue,
+                accent: Color::Cyan,
+                error: Color::Yellow,
+            },
+        ),
+    ]);
+    let theme = themes.get_mut(theme_name).unwrap();
+    theme.clone()
 }

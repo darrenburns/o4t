@@ -1,4 +1,5 @@
 use crate::app::{App, Screen};
+use crate::theme::Theme;
 use crate::wrap::{LineComposer, WordWrapper};
 use ratatui::buffer::Buffer;
 use ratatui::layout::Constraint::Max;
@@ -14,7 +15,6 @@ use ratatui::{
     layout::Flex::SpaceBetween,
     layout::Layout,
     layout::Rect,
-    style::Color::{Red, Yellow},
     style::{Color, Modifier, Style},
     text::{Span, Text},
     widgets::{Block, Padding, Paragraph, Wrap},
@@ -28,12 +28,15 @@ use unicode_width::UnicodeWidthStr;
 struct ResultData {
     pub value: String,
     pub subtext: String,
+    pub theme: Rc<Theme>,
 }
 
 impl Widget for ResultData {
     fn render(self, area: Rect, buf: &mut Buffer) {
         let key_style = Style::default().add_modifier(Modifier::DIM);
-        let value_style = Style::default().fg(Yellow).add_modifier(Modifier::BOLD);
+        let value_style = Style::default()
+            .fg(self.theme.accent)
+            .add_modifier(Modifier::BOLD);
         let text = Text::from(vec![
             Line::styled(self.value, value_style),
             Line::styled(self.subtext, key_style),
@@ -68,7 +71,7 @@ fn build_game_screen(screen_frame: &mut Frame, app: &mut App) {
         let header = Paragraph::new(debug_text);
         screen_frame.render_widget(header, screen_sections[0]);
     } else {
-        let header = build_header();
+        let header = build_header(app);
         screen_frame.render_widget(header, screen_sections[0]);
     }
 
@@ -98,6 +101,7 @@ fn build_game_screen(screen_frame: &mut Frame, app: &mut App) {
             // Check which characters match and which ones don't in order to build up the styling for this word.
             char_style = char_style.add_modifier(Modifier::BOLD);
             build_styled_word(
+                app,
                 &mut words_text,
                 char_style,
                 app.current_user_input.to_string(),
@@ -123,6 +127,7 @@ fn build_game_screen(screen_frame: &mut Frame, app: &mut App) {
         } else {
             // It's not the current word, but we have attempted it - render the word attempt.
             build_styled_word(
+                app,
                 &mut words_text,
                 char_style,
                 user_attempt.to_string(),
@@ -148,7 +153,9 @@ fn build_game_screen(screen_frame: &mut Frame, app: &mut App) {
     let h_pad = 8;
     // The game timer - shows as dim until the game starts.
     let game_time_remaining_secs = app.game_time_remaining_millis().div_ceil(1000);
-    let mut timer_style = Style::default().fg(Yellow).add_modifier(Modifier::DIM);
+    let mut timer_style = Style::default()
+        .fg(app.theme.accent)
+        .add_modifier(Modifier::DIM);
     if app.game_active {
         timer_style = timer_style
             .add_modifier(Modifier::BOLD)
@@ -225,11 +232,13 @@ fn build_game_screen(screen_frame: &mut Frame, app: &mut App) {
     build_footer(screen_frame, screen_sections, app, true, true);
 }
 
-fn build_header() -> Paragraph<'static> {
+fn build_header(app: &App) -> Paragraph<'static> {
     let header_block = Block::default().padding(Padding::horizontal(1));
     let mut title_text = Text::styled(
         "o4t ",
-        Style::default().fg(Yellow).add_modifier(Modifier::BOLD),
+        Style::default()
+            .fg(app.theme.accent)
+            .add_modifier(Modifier::BOLD),
     );
     title_text.push_span(Span::styled(
         env!("CARGO_PKG_VERSION"),
@@ -253,32 +262,38 @@ fn build_score_screen(screen_frame: &mut Frame, app: &mut App) {
         ])
         .split(screen_frame.area());
 
-    screen_frame.render_widget(build_header(), screen_sections[0]);
+    screen_frame.render_widget(build_header(app), screen_sections[0]);
 
     // Score screen body
     let score = &app.score;
     let score_data = vec![
         ResultData {
+            theme: Rc::clone(&app.theme),
             value: format!("{:.0} ", score.wpm),
             subtext: "wpm".to_string(),
         },
         ResultData {
+            theme: Rc::clone(&app.theme),
             value: format!("{:.0}%", score.accuracy * 100.),
             subtext: "accuracy".to_string(),
         },
         ResultData {
+            theme: Rc::clone(&app.theme),
             value: score.character_hits.to_string(),
             subtext: "hits".to_string(),
         },
         ResultData {
+            theme: Rc::clone(&app.theme),
             value: score.character_misses.to_string(),
             subtext: "misses".to_string(),
         },
         ResultData {
+            theme: Rc::clone(&app.theme),
             value: score.best_char_streak.to_string(),
             subtext: "streak".to_string(),
         },
         ResultData {
+            theme: Rc::clone(&app.theme),
             value: score.num_words.to_string(),
             subtext: "words".to_string(),
         },
@@ -323,7 +338,9 @@ fn build_footer(
 
     let keys_block = Block::default().padding(Padding::left(1));
 
-    let key_style = Style::default().fg(Yellow).add_modifier(Modifier::BOLD);
+    let key_style = Style::default()
+        .fg(app.theme.accent)
+        .add_modifier(Modifier::BOLD);
     let value_style = Style::default().add_modifier(Modifier::DIM);
     let mut keys = Line::from(vec![
         Span::styled("ESC ", key_style),
@@ -360,7 +377,7 @@ fn build_footer(
             accuracy,
             wpm,
         );
-        let score_text = Text::styled(score_string, Style::default().fg(Yellow));
+        let score_text = Text::styled(score_string, Style::default().fg(app.theme.accent));
         let score_paragraph = Paragraph::new(score_text)
             .alignment(Alignment::Right)
             .block(score_block);
@@ -370,6 +387,7 @@ fn build_footer(
 }
 
 fn build_styled_word(
+    app: &App,
     words_text: &mut Text,
     char_style: Style,
     user_attempt: String,
@@ -391,7 +409,7 @@ fn build_styled_word(
             total_offset += span.width();
             words_text.push_span(span);
         } else {
-            let span = Span::styled(expected_char.to_string(), char_style.fg(Red));
+            let span = Span::styled(expected_char.to_string(), char_style.fg(app.theme.error));
             words_text.push_span(span);
         }
     }
@@ -399,7 +417,9 @@ fn build_styled_word(
     // Render text we expected the user to type that they didn't type
     let mut missed_char_style = char_style;
     if is_past_word {
-        missed_char_style = missed_char_style.fg(Red).add_modifier(Modifier::UNDERLINED);
+        missed_char_style = missed_char_style
+            .fg(app.theme.error)
+            .add_modifier(Modifier::UNDERLINED);
     }
 
     let mut missed_chars_iter = expected_word.chars().skip(min_len);
@@ -427,7 +447,9 @@ fn build_styled_word(
     let extra_chars_iter = user_attempt.chars().skip(min_len);
     let extra_chars_span = Span::styled(
         extra_chars_iter.collect::<String>(),
-        char_style.fg(Red).add_modifier(Modifier::CROSSED_OUT),
+        char_style
+            .fg(app.theme.error)
+            .add_modifier(Modifier::CROSSED_OUT),
     );
     words_text.push_span(extra_chars_span);
 

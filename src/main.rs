@@ -21,6 +21,7 @@ mod app;
 mod ui;
 mod words;
 mod wrap;
+mod theme;
 
 fn main() -> Result<(), Box<dyn Error>> {
     enable_raw_mode()?;

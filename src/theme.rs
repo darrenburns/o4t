@@ -1,0 +1,10 @@
+use ratatui::style::Color;
+
+#[derive(Default, Clone, Debug)]
+pub struct Theme {
+    pub(crate) name: &'static str,
+    pub(crate) fg: Color,
+    pub(crate) bg: Color,
+    pub(crate) accent: Color,
+    pub(crate) error: Color,
+}
