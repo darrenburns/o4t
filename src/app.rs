@@ -6,9 +6,8 @@ use std::collections::HashMap;
 use std::ops::Div;
 use std::rc::Rc;
 use std::time::Duration;
-use ratatui::style::{Style, Stylize};
 use tachyonfx::Interpolation::QuadOut;
-use tachyonfx::{fx, Effect};
+use tachyonfx::{fx, Effect, Interpolation, Motion};
 
 pub enum Screen {
     Game,
@@ -16,7 +15,7 @@ pub enum Screen {
 }
 
 const NUMBER_OF_WORDS_TO_PICK: usize = 500;
-const DEFAULT_GAME_LENGTH: Duration = Duration::from_secs(20);
+const DEFAULT_GAME_LENGTH: Duration = Duration::from_secs(5);
 
 #[derive(Debug, PartialOrd, PartialEq)]
 pub struct WordAttempt {
@@ -80,6 +79,7 @@ pub struct App {
     pub score: Score,
     pub load_results_screen_effect: Effect,
     pub load_words_effect: Effect,
+    pub perfect_score_effect: Effect,
     pub last_tick_duration: Duration,
 
     pub is_debug_mode: bool,
@@ -94,8 +94,14 @@ pub fn load_words_effect() -> Effect {
     fx::coalesce((180, QuadOut))
 }
 
-pub fn load_results_screen_effect() -> Effect {
+pub fn load_score_screen_effect() -> Effect {
     fx::coalesce((180, QuadOut))
+}
+
+pub fn score_screen_perfect_round_effect(theme: Rc<Theme>) -> Effect {
+    let timer = (1000, Interpolation::CubicInOut);
+    let effect = fx::sweep_out(Motion::RightToLeft, 10, 4, theme.secondary, timer);
+    fx::delay(400, effect)
 }
 
 pub enum CursorType {
@@ -106,6 +112,7 @@ pub enum CursorType {
 
 impl App {
     pub fn new() -> App {
+        let theme = Rc::new(get_theme("monokai"));
         App {
             current_user_input: String::new(),
             current_word_offset: 0,
@@ -117,11 +124,12 @@ impl App {
             current_millis: 0,
             score: Score::default(),
             load_words_effect: load_words_effect(),
-            load_results_screen_effect: load_results_screen_effect(),
+            load_results_screen_effect: load_score_screen_effect(),
+            perfect_score_effect: score_screen_perfect_round_effect(Rc::clone(&theme)),
             last_tick_duration: Duration::ZERO,
             is_debug_mode: false, // TODO - make cli switch
             debug_string: "".to_string(),
-            theme: Rc::new(get_theme("terminal-yellow")),
+            theme: Rc::clone(&theme),
             cursor_style: CursorType::Underline,
         }
     }
@@ -214,7 +222,6 @@ fn generate_words() -> Vec<WordAttempt> {
 }
 
 fn get_theme(theme_name: &str) -> Theme {
-    let default_cursor_style = Style::default().underlined();
     let mut themes: HashMap<&str, Theme> = HashMap::from([
         (
             "terminal-yellow",
@@ -244,11 +251,11 @@ fn get_theme(theme_name: &str) -> Theme {
             "nord",
             Theme {
                 name: "nord",
-                fg: Color::from_u32(0xD8DEE9),     // nord4
-                bg: Color::from_u32(0x2E3440),     // nord0
-                primary: Color::from_u32(0x88C0D0), // nord8
+                fg: Color::from_u32(0xD8DEE9),        // nord4
+                bg: Color::from_u32(0x2E3440),        // nord0
+                primary: Color::from_u32(0x88C0D0),   // nord8
                 secondary: Color::from_u32(0xB48EAD), // nord14
-                error: Color::from_u32(0xBF616A),  // nord11
+                error: Color::from_u32(0xBF616A),     // nord11
                 supports_alpha: true,
             },
         ),
@@ -256,11 +263,11 @@ fn get_theme(theme_name: &str) -> Theme {
             "catppuccin-mocha",
             Theme {
                 name: "catppuccin-mocha",
-                fg: Color::from_u32(0xCDD6F4),     // Text
-                bg: Color::from_u32(0x1E1E2E),     // Base
-                primary: Color::from_u32(0x89B4FA), // Blue
+                fg: Color::from_u32(0xCDD6F4),        // Text
+                bg: Color::from_u32(0x1E1E2E),        // Base
+                primary: Color::from_u32(0x89B4FA),   // Blue
                 secondary: Color::from_u32(0xCBA6F7), // Mauve
-                error: Color::from_u32(0xF38BA8),  // Red
+                error: Color::from_u32(0xF38BA8),     // Red
                 supports_alpha: true,
             },
         ),
@@ -268,11 +275,11 @@ fn get_theme(theme_name: &str) -> Theme {
             "dracula",
             Theme {
                 name: "dracula",
-                fg: Color::from_u32(0xF8F8F2),     // Foreground
-                bg: Color::from_u32(0x282A36),     // Background
-                primary: Color::from_u32(0xBD93F9), // Purple
+                fg: Color::from_u32(0xF8F8F2),        // Foreground
+                bg: Color::from_u32(0x282A36),        // Background
+                primary: Color::from_u32(0xBD93F9),   // Purple
                 secondary: Color::from_u32(0x8BE9FD), // Cyan
-                error: Color::from_u32(0xFF5555),  // Red
+                error: Color::from_u32(0xFF5555),     // Red
                 supports_alpha: true,
             },
         ),
@@ -280,11 +287,11 @@ fn get_theme(theme_name: &str) -> Theme {
             "gruvbox", // Using the dark variant
             Theme {
                 name: "gruvbox",
-                fg: Color::from_u32(0xEBDBB2),     // fg1
-                bg: Color::from_u32(0x282828),     // bg0
-                primary: Color::from_u32(0xFABD2F), // yellow
+                fg: Color::from_u32(0xEBDBB2),        // fg1
+                bg: Color::from_u32(0x282828),        // bg0
+                primary: Color::from_u32(0xFABD2F),   // yellow
                 secondary: Color::from_u32(0x8EC07C), // aqua
-                error: Color::from_u32(0xFB4934),  // red
+                error: Color::from_u32(0xFB4934),     // red
                 supports_alpha: true,
             },
         ),
@@ -292,11 +299,11 @@ fn get_theme(theme_name: &str) -> Theme {
             "solarized-dark",
             Theme {
                 name: "solarized-dark",
-                fg: Color::from_u32(0x839496),      // base0
-                bg: Color::from_u32(0x002B36),      // base03
-                primary: Color::from_u32(0x268BD2), // blue
+                fg: Color::from_u32(0x839496),        // base0
+                bg: Color::from_u32(0x002B36),        // base03
+                primary: Color::from_u32(0x268BD2),   // blue
                 secondary: Color::from_u32(0x2AA198), // cyan
-                error: Color::from_u32(0xDC322F),   // red
+                error: Color::from_u32(0xDC322F),     // red
                 supports_alpha: true,
             },
         ),
@@ -304,11 +311,11 @@ fn get_theme(theme_name: &str) -> Theme {
             "tokyo-night",
             Theme {
                 name: "tokyo-night",
-                fg: Color::from_u32(0xC0CAF5),      // fg
-                bg: Color::from_u32(0x1A1B26),      // bg
-                primary: Color::from_u32(0x7AA2F7), // blue
+                fg: Color::from_u32(0xC0CAF5),        // fg
+                bg: Color::from_u32(0x1A1B26),        // bg
+                primary: Color::from_u32(0x7AA2F7),   // blue
                 secondary: Color::from_u32(0xff9e64), // magenta
-                error: Color::from_u32(0xf7768e),   // red
+                error: Color::from_u32(0xf7768e),     // red
                 supports_alpha: true,
             },
         ),
@@ -325,7 +332,7 @@ fn get_theme(theme_name: &str) -> Theme {
             },
         ),
         (
-            "galaxy",  // from Posting
+            "galaxy", // from Posting
             Theme {
                 name: "galaxy",
                 fg: Color::from_u32(0xC0CAF5),

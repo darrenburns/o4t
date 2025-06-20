@@ -1,4 +1,4 @@
-use crate::app::{load_results_screen_effect, load_words_effect, App, Screen};
+use crate::app::{load_score_screen_effect, load_words_effect, score_screen_perfect_round_effect, App, Screen};
 use crate::ui::ui;
 use ratatui::backend::{Backend, CrosstermBackend};
 use ratatui::crossterm::event::{
@@ -13,6 +13,7 @@ use std::cmp::max;
 use std::error::Error;
 use std::time::Instant;
 use std::{io, thread};
+use std::rc::Rc;
 use tachyonfx::Duration;
 use tokio::sync::mpsc;
 use tokio::time::interval;
@@ -76,7 +77,10 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
         if let Ok(millis_elapsed) = rx.try_recv() {
             app.current_millis = millis_elapsed;
             if app.game_time_remaining_millis() == 0 {
-                app.load_results_screen_effect = load_results_screen_effect();
+                app.load_results_screen_effect = load_score_screen_effect();
+                if app.score.accuracy == 100. {
+                    app.perfect_score_effect = score_screen_perfect_round_effect(Rc::clone(&app.theme));
+                }
                 app.game_active = false;
                 app.current_screen = Screen::Results;
             }
@@ -104,7 +108,7 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
             if app.game_active {
                 app.refresh_internal_score();
             }
-            
+
             match app.current_screen {
                 Screen::Game => match key.code {
                     // Pressing any character, while the game hasn't started, starts the game

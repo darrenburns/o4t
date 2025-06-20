@@ -9,7 +9,6 @@ use ratatui::prelude::{Line, Widget};
 use ratatui::style::{Color, Stylize};
 use ratatui::widgets::Clear;
 use ratatui::{
-    Frame,
     layout::Constraint,
     layout::Constraint::{Length, Min},
     layout::Direction,
@@ -19,8 +18,9 @@ use ratatui::{
     style::{Modifier, Style},
     text::{Span, Text},
     widgets::{Block, Padding, Paragraph, Wrap},
+    Frame,
 };
-use std::cmp::{max, min};
+use std::cmp::max;
 use std::rc::Rc;
 use tachyonfx::{EffectRenderer, Shader, ToRgbComponents};
 use unicode_width::UnicodeWidthStr;
@@ -259,7 +259,7 @@ fn build_game_screen(screen_frame: &mut Frame, app: &mut App) {
     }
 
     // Footer
-    build_footer(screen_frame, screen_sections, app, true, true);
+    build_footer(screen_frame, screen_sections[2], app, true, true);
 }
 
 fn build_header(app: &App) -> Paragraph<'static> {
@@ -284,7 +284,7 @@ fn build_header(app: &App) -> Paragraph<'static> {
 }
 
 fn build_score_screen(screen_frame: &mut Frame, app: &mut App) {
-    let screen_sections = Layout::default()
+    let [header_rect, body_rect, footer_rect] = Layout::default()
         .horizontal_margin(3)
         .vertical_margin(1)
         .direction(Direction::Vertical)
@@ -293,9 +293,9 @@ fn build_score_screen(screen_frame: &mut Frame, app: &mut App) {
             Min(2),    // Body
             Length(1), // Footer
         ])
-        .split(screen_frame.area());
+        .areas(screen_frame.area());
 
-    screen_frame.render_widget(build_header(app), screen_sections[0]);
+    screen_frame.render_widget(build_header(app), header_rect);
 
     // Score screen body
     let score = &app.score;
@@ -339,7 +339,7 @@ fn build_score_screen(screen_frame: &mut Frame, app: &mut App) {
         .spacing(1)
         .horizontal_margin(1);
 
-    let rows = vertical.split(screen_sections[1]);
+    let rows = vertical.split(body_rect);
     let cells = rows.iter().flat_map(|&row| horizontal.split(row).to_vec());
 
     for (score_data, cell_area) in score_data.into_iter().zip(cells) {
@@ -350,16 +350,16 @@ fn build_score_screen(screen_frame: &mut Frame, app: &mut App) {
     if load_effect.running() {
         screen_frame.render_effect(
             load_effect,
-            screen_sections[1],
+            body_rect,
             app.last_tick_duration.into(),
         );
     }
-    build_footer(screen_frame, screen_sections, app, false, true);
+    build_footer(screen_frame, footer_rect, app, false, true);
 }
 
 fn build_footer(
     screen_frame: &mut Frame,
-    sections: Rc<[Rect]>,
+    rect: Rect ,
     app: &mut App,
     show_scoring: bool,
     show_reset: bool,
@@ -367,7 +367,7 @@ fn build_footer(
     let score_constraint = if show_scoring { Min(10) } else { Max(0) };
     let footer_sections: [Rect; 2] = Layout::horizontal([Constraint::Fill(1), score_constraint])
         .flex(SpaceBetween)
-        .areas(sections[2]);
+        .areas(rect);
 
     let keys_block = Block::default()
         .padding(Padding::left(1))
