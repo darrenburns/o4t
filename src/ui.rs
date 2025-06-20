@@ -351,9 +351,10 @@ fn build_score_screen(screen_frame: &mut Frame, app: &mut App) {
     let cells = rows.iter().skip(num_skips).flat_map(|&row| horizontal.split(row).to_vec()).collect::<Vec<_>>();
 
     if is_perfect_score {
+        let perfect_score_section = rows.iter().next().unwrap(); 
         screen_frame.render_widget(
             Line::styled("Perfect!", Style::default().fg(app.theme.secondary).italic()),
-            *rows.iter().next().unwrap(),
+            *perfect_score_section,
         );
     }
     for (score_data, cell_area) in score_data.into_iter().zip(cells) {

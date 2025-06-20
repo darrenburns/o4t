@@ -85,7 +85,6 @@ pub struct App {
     pub score: Score,
     pub load_results_screen_effect: Effect,
     pub load_words_effect: Effect,
-    pub perfect_score_effect: Effect,
     pub last_tick_duration: Duration,
 
     pub is_debug_mode: bool,
@@ -102,12 +101,6 @@ pub fn load_words_effect() -> Effect {
 
 pub fn load_score_screen_effect() -> Effect {
     fx::coalesce((180, QuadOut))
-}
-
-pub fn score_screen_perfect_round_effect(theme: Rc<Theme>) -> Effect {
-    let timer = (1000, Interpolation::CubicInOut);
-    let effect = fx::sweep_out(Motion::RightToLeft, 10, 4, theme.secondary, timer);
-    fx::delay(400, effect)
 }
 
 pub enum CursorType {
@@ -131,7 +124,6 @@ impl App {
             score: Score::default(),
             load_words_effect: load_words_effect(),
             load_results_screen_effect: load_score_screen_effect(),
-            perfect_score_effect: score_screen_perfect_round_effect(Rc::clone(&theme)),
             last_tick_duration: Duration::ZERO,
             is_debug_mode: false, // TODO - make cli switch
             debug_string: "".to_string(),
