@@ -75,7 +75,7 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
         // The ui function will the frame and draw to it
         terminal.draw(|f| ui(f, app))?;
 
-        if let Ok(millis_elapsed) = rx.try_recv() {
+        if let Ok(_) = rx.try_recv() {
             app.current_millis = app.current_millis + app.last_tick_duration.as_millis() as u64;
             if app.game_time_remaining_millis() == 0 {
                 app.load_results_screen_effect = load_score_screen_effect();
