@@ -191,7 +191,7 @@ impl App {
         // We add the current_word_offset below as it represents the number of spaces, which should
         // be included in the WPM calculation.
         let mut wpm =
-            ((character_matches + self.current_word_offset) as f32 / 5.) * (60. / seconds_elapsed);
+            ((character_matches + num_correct_words) as f32 / 5.) * (60. / seconds_elapsed);
 
         if wpm.is_infinite() {
             wpm = 0.;
