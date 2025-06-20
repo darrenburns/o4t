@@ -188,7 +188,7 @@ impl App {
         let minutes_elapsed = seconds_elapsed / 60.;
         let chars_per_minute = num_chars as f32 / minutes_elapsed;
         let real_words_per_minute = num_correct_words as f32 / minutes_elapsed;
-        // We add the current_word_offset below as it represents the number of spaces, which should
+        // We add the num_correct_words below as it represents the number of spaces, which should
         // be included in the WPM calculation.
         let mut wpm =
             ((character_matches + num_correct_words) as f32 / 5.) * (60. / seconds_elapsed);
