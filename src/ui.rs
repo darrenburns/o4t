@@ -6,7 +6,7 @@ use ratatui::layout::Constraint::Max;
 use ratatui::layout::Flex::Center;
 use ratatui::layout::{Alignment, Margin, Offset};
 use ratatui::prelude::{Line, Widget};
-use ratatui::style::{Color, Stylize};
+use ratatui::style::{Color, Styled, Stylize};
 use ratatui::widgets::Clear;
 use ratatui::{
     layout::Constraint,
@@ -332,7 +332,12 @@ fn build_score_screen(screen_frame: &mut Frame, app: &mut App) {
         },
     ];
     let col_constraints = (0..3).map(|_| Length(10));
-    let row_constraints = (0..2).map(|_| Length(3));
+    let mut row_constraints = (0..2).map(|_| Length(3)).collect::<Vec<_>>();
+    let is_perfect_score = app.score.is_perfect();
+    if is_perfect_score {
+        row_constraints.insert(0, Length(1));
+    }
+
     let horizontal = Layout::horizontal(col_constraints).spacing(1);
     let vertical = Layout::vertical(row_constraints)
         .flex(Center)
@@ -340,8 +345,17 @@ fn build_score_screen(screen_frame: &mut Frame, app: &mut App) {
         .horizontal_margin(1);
 
     let rows = vertical.split(body_rect);
-    let cells = rows.iter().flat_map(|&row| horizontal.split(row).to_vec());
+    // If the score is perfect, then we've added an extra constraint to insert "PERFECT" text,
+    // so skip that as it's not one of the "table cells" we'll insert our data into.
+    let num_skips = if is_perfect_score { 1 } else { 0 };
+    let cells = rows.iter().skip(num_skips).flat_map(|&row| horizontal.split(row).to_vec()).collect::<Vec<_>>();
 
+    if is_perfect_score {
+        screen_frame.render_widget(
+            Line::styled("Perfect!", Style::default().fg(app.theme.secondary).italic()),
+            *rows.iter().next().unwrap(),
+        );
+    }
     for (score_data, cell_area) in score_data.into_iter().zip(cells) {
         screen_frame.render_widget(score_data, cell_area);
     }
@@ -405,7 +419,7 @@ fn build_footer(
         } else {
             empty_score_placeholder.to_string()
         };
-        let wpm = if app.game_active && !score.wpm.is_nan() {
+        let wpm = if app.game_active && !score.wpm.is_nan() && score.wpm != 0.0 {
             format!("{:.0}", score.wpm)
         } else {
             empty_score_placeholder.to_string()

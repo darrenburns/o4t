@@ -23,6 +23,7 @@ mod ui;
 mod words;
 mod wrap;
 mod theme;
+
 fn main() -> Result<(), Box<dyn Error>> {
     enable_raw_mode()?;
     let mut stderr = io::stderr();
@@ -75,7 +76,7 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
         terminal.draw(|f| ui(f, app))?;
 
         if let Ok(millis_elapsed) = rx.try_recv() {
-            app.current_millis = millis_elapsed;
+            app.current_millis = app.current_millis + app.last_tick_duration.as_millis() as u64;
             if app.game_time_remaining_millis() == 0 {
                 app.load_results_screen_effect = load_score_screen_effect();
                 if app.score.accuracy == 100. {
@@ -83,6 +84,9 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
                 }
                 app.game_active = false;
                 app.current_screen = Screen::Results;
+            }
+            if app.game_active {
+                app.refresh_internal_score();
             }
         }
 
@@ -95,7 +99,6 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
                 continue;
             }
 
-
             match key.code {
                 KeyCode::Esc => return Ok(true),
                 KeyCode::Tab => app.reset_game(),
@@ -104,10 +107,6 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
 
             let ctrl = key.modifiers.contains(KeyModifiers::CONTROL);
             let alt = key.modifiers.contains(KeyModifiers::ALT);
-
-            if app.game_active {
-                app.refresh_internal_score();
-            }
 
             match app.current_screen {
                 Screen::Game => match key.code {

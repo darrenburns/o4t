@@ -53,6 +53,12 @@ pub struct Score {
     pub current_char_streak: usize,
 }
 
+impl Score {
+    pub fn is_perfect(&self) -> bool {
+        self.character_misses == 0 && self.num_words > 0
+    }
+}
+
 impl WordAttempt {
     pub fn new(word: String) -> WordAttempt {
         WordAttempt {
@@ -192,8 +198,12 @@ impl App {
         let real_words_per_minute = num_correct_words as f32 / minutes_elapsed;
         // We add the current_word_offset below as it represents the number of spaces, which should
         // be included in the WPM calculation.
-        let wpm =
+        let mut wpm =
             ((character_matches + self.current_word_offset) as f32 / 5.) * (60. / seconds_elapsed);
+
+        if wpm.is_infinite() {
+            wpm = 0.;
+        }
 
         self.score = Score {
             character_matches,
