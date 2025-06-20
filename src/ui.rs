@@ -215,7 +215,11 @@ fn build_game_screen(screen_frame: &mut Frame, app: &mut App) {
                     grapheme
                         .style
                         .patch(grapheme.style.fg.map_or(app.theme.fg, |fg| {
-                            blend_colors(fg, app.theme.bg, line_alpha)
+                            if app.theme.supports_alpha {
+                                blend_colors(fg, app.theme.bg, line_alpha)
+                            } else {
+                                fg
+                            }
                         })),
                 )
             })

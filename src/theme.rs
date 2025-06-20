@@ -8,4 +8,5 @@ pub struct Theme {
     pub(crate) primary: Color,
     pub(crate) secondary: Color,
     pub(crate) error: Color,
+    pub(crate) supports_alpha: bool,
 }

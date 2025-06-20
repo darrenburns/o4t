@@ -121,7 +121,7 @@ impl App {
             last_tick_duration: Duration::ZERO,
             is_debug_mode: false, // TODO - make cli switch
             debug_string: "".to_string(),
-            theme: Rc::new(get_theme("galaxy")),
+            theme: Rc::new(get_theme("terminal-yellow")),
             cursor_style: CursorType::Underline,
         }
     }
@@ -225,6 +225,7 @@ fn get_theme(theme_name: &str) -> Theme {
                 primary: Color::Yellow,
                 secondary: Color::Yellow,
                 error: Color::Red,
+                supports_alpha: false,
             },
         ),
         (
@@ -236,6 +237,7 @@ fn get_theme(theme_name: &str) -> Theme {
                 primary: Color::Cyan,
                 secondary: Color::Cyan,
                 error: Color::Yellow,
+                supports_alpha: false,
             },
         ),
         (
@@ -247,6 +249,7 @@ fn get_theme(theme_name: &str) -> Theme {
                 primary: Color::from_u32(0x88C0D0), // nord8
                 secondary: Color::from_u32(0xB48EAD), // nord14
                 error: Color::from_u32(0xBF616A),  // nord11
+                supports_alpha: true,
             },
         ),
         (
@@ -258,6 +261,7 @@ fn get_theme(theme_name: &str) -> Theme {
                 primary: Color::from_u32(0x89B4FA), // Blue
                 secondary: Color::from_u32(0xCBA6F7), // Mauve
                 error: Color::from_u32(0xF38BA8),  // Red
+                supports_alpha: true,
             },
         ),
         (
@@ -269,6 +273,7 @@ fn get_theme(theme_name: &str) -> Theme {
                 primary: Color::from_u32(0xBD93F9), // Purple
                 secondary: Color::from_u32(0x8BE9FD), // Cyan
                 error: Color::from_u32(0xFF5555),  // Red
+                supports_alpha: true,
             },
         ),
         (
@@ -280,6 +285,7 @@ fn get_theme(theme_name: &str) -> Theme {
                 primary: Color::from_u32(0xFABD2F), // yellow
                 secondary: Color::from_u32(0x8EC07C), // aqua
                 error: Color::from_u32(0xFB4934),  // red
+                supports_alpha: true,
             },
         ),
         (
@@ -291,6 +297,7 @@ fn get_theme(theme_name: &str) -> Theme {
                 primary: Color::from_u32(0x268BD2), // blue
                 secondary: Color::from_u32(0x2AA198), // cyan
                 error: Color::from_u32(0xDC322F),   // red
+                supports_alpha: true,
             },
         ),
         (
@@ -302,6 +309,7 @@ fn get_theme(theme_name: &str) -> Theme {
                 primary: Color::from_u32(0x7AA2F7), // blue
                 secondary: Color::from_u32(0xff9e64), // magenta
                 error: Color::from_u32(0xf7768e),   // red
+                supports_alpha: true,
             },
         ),
         (
@@ -313,6 +321,7 @@ fn get_theme(theme_name: &str) -> Theme {
                 primary: Color::from_u32(0xF92672),   // pink
                 secondary: Color::from_u32(0xA6E22E), // green
                 error: Color::from_u32(0xF92672),     // pink also serves well as error color
+                supports_alpha: true,
             },
         ),
         (
@@ -324,6 +333,7 @@ fn get_theme(theme_name: &str) -> Theme {
                 primary: Color::from_u32(0xC45AFF),
                 secondary: Color::from_u32(0xa684e8),
                 error: Color::from_u32(0xFF4500),
+                supports_alpha: true,
             },
         ),
     ]);
