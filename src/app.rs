@@ -376,7 +376,7 @@ fn get_themes() -> Vec<Theme> {
             success: Color::from_u32(0x50FA7B), // bright green
             error: Color::from_u32(0xFF4500),
             supports_alpha: true,
-            character_match: Style::default().not_dim(),
+            character_match: Style::default().fg(Color::from_u32(0x50FA7B)).not_dim(),
             character_mismatch: Style::default().fg(Color::from_u32(0xFF4500)),
         },
     ]
