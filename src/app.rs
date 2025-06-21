@@ -9,6 +9,7 @@ use std::collections::HashMap;
 use std::ops::Div;
 use std::rc::Rc;
 use std::time::Duration;
+use ratatui::style::{Style, Stylize};
 use tachyonfx::Interpolation::{QuadIn, QuadOut};
 use tachyonfx::{Effect, Interpolation, fx};
 
@@ -267,6 +268,8 @@ fn get_themes() -> Vec<Theme> {
             success: Color::Green,
             error: Color::Red,
             supports_alpha: false,
+            character_match: Style::default().not_dim(),
+            character_mismatch: Style::default().fg(Color::Red),
         },
         Theme {
             name: "terminal-cyan",
@@ -277,6 +280,8 @@ fn get_themes() -> Vec<Theme> {
             success: Color::Green,
             error: Color::Yellow,
             supports_alpha: false,
+            character_match: Style::default().not_dim(),
+            character_mismatch: Style::default().fg(Color::Red),
         },
         Theme {
             name: "nord",
@@ -287,6 +292,8 @@ fn get_themes() -> Vec<Theme> {
             success: Color::from_u32(0xA3BE8C),   // nord14
             error: Color::from_u32(0xBF616A),     // nord11
             supports_alpha: true,
+            character_match: Style::default().not_dim(),
+            character_mismatch: Style::default().fg(Color::from_u32(0xBF616A)),
         },
         Theme {
             name: "catppuccin-mocha",
@@ -297,6 +304,8 @@ fn get_themes() -> Vec<Theme> {
             success: Color::from_u32(0xA6E3A1),   // Green
             error: Color::from_u32(0xF38BA8),     // Red
             supports_alpha: true,
+            character_match: Style::default().not_dim(),
+            character_mismatch: Style::default().fg(Color::from_u32(0xF38BA8)),
         },
         Theme {
             name: "dracula",
@@ -307,6 +316,8 @@ fn get_themes() -> Vec<Theme> {
             success: Color::from_u32(0x50FA7B),   // Green
             error: Color::from_u32(0xFF5555),     // Red
             supports_alpha: true,
+            character_match: Style::default().not_dim(),
+            character_mismatch: Style::default().fg(Color::from_u32(0xFF5555)),
         },
         Theme {
             name: "gruvbox",
@@ -317,6 +328,8 @@ fn get_themes() -> Vec<Theme> {
             success: Color::from_u32(0xB8BB26),   // green
             error: Color::from_u32(0xFB4934),     // red
             supports_alpha: true,
+            character_match: Style::default().not_dim(),
+            character_mismatch: Style::default().fg(Color::from_u32(0xFB4934)),
         },
         Theme {
             name: "solarized-dark",
@@ -327,6 +340,8 @@ fn get_themes() -> Vec<Theme> {
             success: Color::from_u32(0x859900),   // green
             error: Color::from_u32(0xDC322F),     // red
             supports_alpha: true,
+            character_match: Style::default().not_dim(),
+            character_mismatch: Style::default().fg(Color::from_u32(0xDC322F)),
         },
         Theme {
             name: "tokyo-night",
@@ -337,6 +352,8 @@ fn get_themes() -> Vec<Theme> {
             success: Color::from_u32(0x9ECE6A),   // green
             error: Color::from_u32(0xf7768e),     // red
             supports_alpha: true,
+            character_match: Style::default().not_dim(),
+            character_mismatch: Style::default().fg(Color::from_u32(0xf7768e)),
         },
         Theme {
             name: "monokai",
@@ -347,6 +364,8 @@ fn get_themes() -> Vec<Theme> {
             success: Color::from_u32(0xA6E22E),   // green
             error: Color::from_u32(0xF92672),     // pink also serves well as error color
             supports_alpha: true,
+            character_match: Style::default().not_dim(),
+            character_mismatch: Style::default().fg(Color::from_u32(0xF92672)),
         },
         Theme {
             name: "galaxy",
@@ -357,6 +376,8 @@ fn get_themes() -> Vec<Theme> {
             success: Color::from_u32(0x50FA7B), // bright green
             error: Color::from_u32(0xFF4500),
             supports_alpha: true,
+            character_match: Style::default().not_dim(),
+            character_mismatch: Style::default().fg(Color::from_u32(0xFF4500)),
         },
     ]
 }

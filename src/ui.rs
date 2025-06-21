@@ -93,9 +93,7 @@ fn build_game_screen(screen_frame: &mut Frame, app: &mut App) {
     let mut words_text = Text::default();
     let mut cursor_offset = 0;
     for (index, word) in words.iter().enumerate() {
-        let mut char_style = Style::default()
-            .fg(current_theme.fg)
-            .add_modifier(Modifier::DIM);
+        let mut char_style = Style::default().fg(current_theme.fg);
         let user_attempt = &app.words[index].user_attempt;
 
         // Compute the cursor offset
@@ -470,14 +468,14 @@ fn build_styled_word(
     for (expected_char, user_char) in zipped_chars {
         let mut style = char_style;
         if user_char == expected_char {
-            style = style.remove_modifier(Modifier::DIM);
+            style = style.patch(current_theme.character_match);
             let span = Span::styled(expected_char.to_string(), style);
             total_offset += span.width();
             words_text.push_span(span);
         } else {
             let span = Span::styled(
                 expected_char.to_string(),
-                char_style.fg(current_theme.error),
+                char_style.patch(current_theme.character_mismatch),
             );
             words_text.push_span(span);
         }
@@ -485,11 +483,13 @@ fn build_styled_word(
 
     let current_theme = app.get_current_theme();
 
-    // Render text we expected the user to type that they didn't type
+    // Render text we expected the user to type that they didn't type at all
+    // (not that they typed incorrectly - this is for when you press space too
+    // early, before getting to the end of a word).
     let mut missed_char_style = char_style;
     if is_past_word {
         missed_char_style = missed_char_style
-            .fg(current_theme.error)
+            .patch(current_theme.character_mismatch)
             .add_modifier(Modifier::UNDERLINED);
     }
 
@@ -519,7 +519,7 @@ fn build_styled_word(
     let extra_chars_span = Span::styled(
         extra_chars_iter.collect::<String>(),
         char_style
-            .fg(current_theme.error)
+            .patch(current_theme.character_mismatch)
             .add_modifier(Modifier::CROSSED_OUT),
     );
     words_text.push_span(extra_chars_span);
