@@ -1,4 +1,4 @@
-use crate::app::CursorType;
+use crate::app::{WordHighlight, CursorType};
 use crate::app::{App, Screen, load_score_screen_effect, load_words_effect};
 use crate::ui::ui;
 use clap::Parser;
@@ -39,8 +39,10 @@ pub struct Config {
     pub theme: String,
     #[clap(long, value_parser, default_value_t = 60)]
     pub target_wpm: usize,
-    #[arg(short, long, value_enum, value_name="STYLE", default_value_t=CursorType::Underline)]
+    #[clap(short, long, value_enum, value_name="STYLE", default_value_t=CursorType::Underline)]
     pub cursor: CursorType,
+    #[clap(long, value_enum, default_value_t = WordHighlight::Bold)]
+    pub word_highlight: WordHighlight,
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
@@ -154,6 +156,7 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
                     KeyCode::Char(char) => {
                         if ctrl && char == 'w' {
                             app.current_user_input = String::new();
+                            continue;
                         }
 
                         let current_word = &app.words[app.current_word_offset].word;

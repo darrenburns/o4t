@@ -119,6 +119,15 @@ pub enum CursorType {
     None,
 }
 
+#[derive(ValueEnum, Clone, Debug, Copy, Serialize, Deserialize)]
+#[clap(rename_all = "kebab-case")]
+#[serde(rename_all = "kebab-case")]
+pub enum WordHighlight {
+    Bold,
+    Highlight,
+    None
+}
+
 impl App {
     pub fn with_config(config: Rc<Config>) -> App {
         let theme_name = &config.theme;

@@ -1,4 +1,4 @@
-use crate::app::{App, CursorType, Screen};
+use crate::app::{App, WordHighlight, CursorType, Screen};
 use crate::theme::Theme;
 use crate::wrap::{LineComposer, WordWrapper};
 use ratatui::buffer::Buffer;
@@ -105,7 +105,15 @@ fn build_game_screen(screen_frame: &mut Frame, app: &mut App) {
 
         if app.current_word_offset == index {
             // Check which characters match and which ones don't in order to build up the styling for this word.
-            char_style = char_style.add_modifier(Modifier::BOLD);
+            match app.config.word_highlight {
+                WordHighlight::Bold => char_style = char_style.add_modifier(Modifier::BOLD),
+                WordHighlight::Highlight if current_theme.supports_alpha => {
+                    char_style = char_style.bg(
+                        blend_colors(current_theme.fg, current_theme.bg, 0.08)
+                    )
+                }
+                _ => {}
+            }
             build_styled_word(
                 app,
                 &mut words_text,
