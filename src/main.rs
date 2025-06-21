@@ -1,11 +1,11 @@
 use crate::app::CursorType;
-use figment::providers::Env;
 use crate::app::{App, Screen, load_score_screen_effect, load_words_effect};
 use crate::ui::ui;
 use clap::Parser;
 use etcetera::{BaseStrategy, choose_base_strategy};
-use figment::{Figment};
-use figment::providers::{Format, Serialized, Toml,};
+use figment::Figment;
+use figment::providers::Env;
+use figment::providers::{Format, Serialized, Toml};
 use ratatui::Terminal;
 use ratatui::backend::{Backend, CrosstermBackend};
 use ratatui::crossterm::event::{
@@ -18,6 +18,7 @@ use ratatui::crossterm::{event, execute};
 use serde::{Deserialize, Serialize};
 use std::cmp::max;
 use std::error::Error;
+use std::rc::Rc;
 use std::time::Instant;
 use std::{io, thread};
 use tachyonfx::Duration;
@@ -60,7 +61,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         .join(Serialized::defaults(Config::parse()))
         .extract()?;
 
-    let mut app = App::with_config(config);
+    let mut app = App::with_config(Rc::from(config));
     let res = run_app(&mut terminal, &mut app);
 
     disable_raw_mode()?;
@@ -95,7 +96,7 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
     terminal.clear()?;
 
     let mut last_frame_instant = Instant::now();
-    app.load_words_effect = load_words_effect();
+    app.load_words_effect = load_words_effect(app.get_current_theme().clone());
     loop {
         app.last_tick_duration = last_frame_instant.elapsed().into();
         last_frame_instant = Instant::now();
@@ -124,15 +125,21 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
                 continue;
             }
 
+            let ctrl = key.modifiers.contains(KeyModifiers::CONTROL);
+            let alt = key.modifiers.contains(KeyModifiers::ALT);
+
+            // Global bindings
             match key.code {
+                KeyCode::Char('t') if ctrl => {
+                    app.next_theme();
+                    continue;
+                }
                 KeyCode::Esc => return Ok(true),
                 KeyCode::Tab => app.reset_game(),
                 _ => {}
             }
 
-            let ctrl = key.modifiers.contains(KeyModifiers::CONTROL);
-            let alt = key.modifiers.contains(KeyModifiers::ALT);
-
+            // Screen-specific bindings
             match app.current_screen {
                 Screen::Game => match key.code {
                     // Pressing any character, while the game hasn't started, starts the game

@@ -1,4 +1,4 @@
-use ratatui::style::{Color, Style};
+use ratatui::style::Color;
 
 #[derive(Default, Clone, Debug)]
 pub struct Theme {
@@ -8,5 +8,6 @@ pub struct Theme {
     pub(crate) primary: Color,
     pub(crate) secondary: Color,
     pub(crate) error: Color,
+    pub(crate) success: Color,
     pub(crate) supports_alpha: bool,
 }

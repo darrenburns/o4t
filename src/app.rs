@@ -1,16 +1,16 @@
 use crate::theme::Theme;
-use crate::{words, Config};
+use crate::{Config, words};
+use clap::ValueEnum;
 use derive_setters::Setters;
 use rand::seq::IteratorRandom;
 use ratatui::prelude::Color;
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::ops::Div;
 use std::rc::Rc;
 use std::time::Duration;
-use clap::ValueEnum;
-use serde::{Deserialize, Serialize};
-use tachyonfx::Interpolation::QuadOut;
-use tachyonfx::{fx, Effect};
+use tachyonfx::Interpolation::{QuadIn, QuadOut};
+use tachyonfx::{Effect, Interpolation, fx};
 
 pub enum Screen {
     Game,
@@ -18,8 +18,6 @@ pub enum Screen {
 }
 
 const NUMBER_OF_WORDS_TO_PICK: usize = 500;
-const DEFAULT_GAME_LENGTH: Duration = Duration::from_secs(5);
-
 #[derive(Debug, PartialOrd, PartialEq)]
 pub struct WordAttempt {
     // the word the user was asked and attempted to type
@@ -95,14 +93,17 @@ pub struct App {
     // Debug string that can be rendered to screen
     pub debug_string: String,
 
-    pub theme: Rc<Theme>,
+    pub theme_name: String,
     pub cursor_style: CursorType,
-    pub config: Config,
-
+    pub themes: Vec<Theme>,
+    pub config: Rc<Config>,
 }
 
-pub fn load_words_effect() -> Effect {
-    fx::coalesce((180, QuadOut))
+pub fn load_words_effect(theme: Theme) -> Effect {
+    fx::parallel(&[
+        fx::fade_from_fg(theme.secondary, (180, QuadOut)),
+        fx::coalesce((180, QuadOut)),
+    ])
 }
 
 pub fn load_score_screen_effect() -> Effect {
@@ -119,8 +120,9 @@ pub enum CursorType {
 }
 
 impl App {
-
-    pub fn with_config(config: Config) -> App {
+    pub fn with_config(config: Rc<Config>) -> App {
+        let theme_name = &config.theme;
+        let theme = get_theme(theme_name);
         App {
             current_user_input: String::new(),
             current_word_offset: 0,
@@ -131,20 +133,40 @@ impl App {
             millis_at_current_game_start: 0,
             current_millis: 0,
             score: Score::default(),
-            load_words_effect: load_words_effect(),
+            load_words_effect: load_words_effect(theme.clone()),
             load_results_screen_effect: load_score_screen_effect(),
             last_tick_duration: Duration::ZERO,
             is_debug_mode: false, // TODO - make cli switch
             debug_string: "".to_string(),
-            theme: get_theme(&config.theme),
+            theme_name: theme_name.to_string(),
+            themes: get_themes(),
             cursor_style: config.cursor,
             config,
         }
     }
 
+    pub fn next_theme(&mut self) {
+        let mut themes = self
+            .themes
+            .iter()
+            .cycle()
+            .skip_while(|theme| theme.name != self.theme_name)
+            .skip(1);
+
+        self.theme_name = themes.next().unwrap().name.to_string();
+    }
+
+    pub fn get_current_theme(&self) -> Theme {
+        self.themes
+            .iter()
+            .find(|t| t.name == self.theme_name)
+            .unwrap()
+            .clone()
+    }
+
     pub fn reset_game(&mut self) {
         let config = self.config.clone();
-        *self = App::with_config(config);
+        *self = App::with_config(config).theme_name(self.theme_name.to_string());
     }
 
     pub fn game_time_elapsed_millis(&self) -> u64 {
@@ -234,129 +256,112 @@ fn generate_words() -> Vec<WordAttempt> {
         .collect()
 }
 
-fn get_theme(theme_name: &str) -> Rc<Theme> {
-    let themes: HashMap<&str, Theme> = HashMap::from([
-        (
-            "terminal-yellow",
-            Theme {
-                name: "terminal-yellow",
-                fg: Color::Reset,
-                bg: Color::Reset,
-                primary: Color::Yellow,
-                secondary: Color::Yellow,
-                error: Color::Red,
-                supports_alpha: false,
-            },
-        ),
-        (
-            "terminal-cyan",
-            Theme {
-                name: "terminal-cyan",
-                fg: Color::White,
-                bg: Color::Blue,
-                primary: Color::Cyan,
-                secondary: Color::Cyan,
-                error: Color::Yellow,
-                supports_alpha: false,
-            },
-        ),
-        (
-            "nord",
-            Theme {
-                name: "nord",
-                fg: Color::from_u32(0xD8DEE9),        // nord4
-                bg: Color::from_u32(0x2E3440),        // nord0
-                primary: Color::from_u32(0x88C0D0),   // nord8
-                secondary: Color::from_u32(0xB48EAD), // nord14
-                error: Color::from_u32(0xBF616A),     // nord11
-                supports_alpha: true,
-            },
-        ),
-        (
-            "catppuccin-mocha",
-            Theme {
-                name: "catppuccin-mocha",
-                fg: Color::from_u32(0xCDD6F4),        // Text
-                bg: Color::from_u32(0x1E1E2E),        // Base
-                primary: Color::from_u32(0x89B4FA),   // Blue
-                secondary: Color::from_u32(0xCBA6F7), // Mauve
-                error: Color::from_u32(0xF38BA8),     // Red
-                supports_alpha: true,
-            },
-        ),
-        (
-            "dracula",
-            Theme {
-                name: "dracula",
-                fg: Color::from_u32(0xF8F8F2),        // Foreground
-                bg: Color::from_u32(0x282A36),        // Background
-                primary: Color::from_u32(0xBD93F9),   // Purple
-                secondary: Color::from_u32(0x8BE9FD), // Cyan
-                error: Color::from_u32(0xFF5555),     // Red
-                supports_alpha: true,
-            },
-        ),
-        (
-            "gruvbox", // Using the dark variant
-            Theme {
-                name: "gruvbox",
-                fg: Color::from_u32(0xEBDBB2),        // fg1
-                bg: Color::from_u32(0x282828),        // bg0
-                primary: Color::from_u32(0xFABD2F),   // yellow
-                secondary: Color::from_u32(0x8EC07C), // aqua
-                error: Color::from_u32(0xFB4934),     // red
-                supports_alpha: true,
-            },
-        ),
-        (
-            "solarized-dark",
-            Theme {
-                name: "solarized-dark",
-                fg: Color::from_u32(0x839496),        // base0
-                bg: Color::from_u32(0x002B36),        // base03
-                primary: Color::from_u32(0x268BD2),   // blue
-                secondary: Color::from_u32(0x2AA198), // cyan
-                error: Color::from_u32(0xDC322F),     // red
-                supports_alpha: true,
-            },
-        ),
-        (
-            "tokyo-night",
-            Theme {
-                name: "tokyo-night",
-                fg: Color::from_u32(0xC0CAF5),        // fg
-                bg: Color::from_u32(0x1A1B26),        // bg
-                primary: Color::from_u32(0x7AA2F7),   // blue
-                secondary: Color::from_u32(0xff9e64), // magenta
-                error: Color::from_u32(0xf7768e),     // red
-                supports_alpha: true,
-            },
-        ),
-        (
-            "monokai",
-            Theme {
-                name: "monokai",
-                fg: Color::from_u32(0xF8F8F2),
-                bg: Color::from_u32(0x272822),
-                primary: Color::from_u32(0xF92672),   // pink
-                secondary: Color::from_u32(0xA6E22E), // green
-                error: Color::from_u32(0xF92672),     // pink also serves well as error color
-                supports_alpha: true,
-            },
-        ),
-        (
-            "galaxy", // from Posting
-            Theme {
-                name: "galaxy",
-                fg: Color::from_u32(0xC0CAF5),
-                bg: Color::from_u32(0x0F0F1F),
-                primary: Color::from_u32(0xC45AFF),
-                secondary: Color::from_u32(0xa684e8),
-                error: Color::from_u32(0xFF4500),
-                supports_alpha: true,
-            },
-        ),
-    ]);
-    let theme = themes.get(theme_name).unwrap();
-    Rc::new(theme.clone())
+fn get_themes() -> Vec<Theme> {
+    vec![
+        Theme {
+            name: "terminal-yellow",
+            fg: Color::Reset,
+            bg: Color::Reset,
+            primary: Color::Yellow,
+            secondary: Color::Yellow,
+            success: Color::Green,
+            error: Color::Red,
+            supports_alpha: false,
+        },
+        Theme {
+            name: "terminal-cyan",
+            fg: Color::White,
+            bg: Color::Blue,
+            primary: Color::Cyan,
+            secondary: Color::Cyan,
+            success: Color::Green,
+            error: Color::Yellow,
+            supports_alpha: false,
+        },
+        Theme {
+            name: "nord",
+            fg: Color::from_u32(0xD8DEE9),        // nord4
+            bg: Color::from_u32(0x2E3440),        // nord0
+            primary: Color::from_u32(0x88C0D0),   // nord8
+            secondary: Color::from_u32(0xB48EAD), // nord15
+            success: Color::from_u32(0xA3BE8C),   // nord14
+            error: Color::from_u32(0xBF616A),     // nord11
+            supports_alpha: true,
+        },
+        Theme {
+            name: "catppuccin-mocha",
+            fg: Color::from_u32(0xCDD6F4),        // Text
+            bg: Color::from_u32(0x1E1E2E),        // Base
+            primary: Color::from_u32(0x89B4FA),   // Blue
+            secondary: Color::from_u32(0xCBA6F7), // Mauve
+            success: Color::from_u32(0xA6E3A1),   // Green
+            error: Color::from_u32(0xF38BA8),     // Red
+            supports_alpha: true,
+        },
+        Theme {
+            name: "dracula",
+            fg: Color::from_u32(0xF8F8F2),        // Foreground
+            bg: Color::from_u32(0x282A36),        // Background
+            primary: Color::from_u32(0xBD93F9),   // Purple
+            secondary: Color::from_u32(0x8BE9FD), // Cyan
+            success: Color::from_u32(0x50FA7B),   // Green
+            error: Color::from_u32(0xFF5555),     // Red
+            supports_alpha: true,
+        },
+        Theme {
+            name: "gruvbox",
+            fg: Color::from_u32(0xEBDBB2),        // fg1
+            bg: Color::from_u32(0x282828),        // bg0
+            primary: Color::from_u32(0xFABD2F),   // yellow
+            secondary: Color::from_u32(0x8EC07C), // aqua
+            success: Color::from_u32(0xB8BB26),   // green
+            error: Color::from_u32(0xFB4934),     // red
+            supports_alpha: true,
+        },
+        Theme {
+            name: "solarized-dark",
+            fg: Color::from_u32(0x839496),        // base0
+            bg: Color::from_u32(0x002B36),        // base03
+            primary: Color::from_u32(0x268BD2),   // blue
+            secondary: Color::from_u32(0x2AA198), // cyan
+            success: Color::from_u32(0x859900),   // green
+            error: Color::from_u32(0xDC322F),     // red
+            supports_alpha: true,
+        },
+        Theme {
+            name: "tokyo-night",
+            fg: Color::from_u32(0xC0CAF5),        // fg
+            bg: Color::from_u32(0x1A1B26),        // bg
+            primary: Color::from_u32(0x7AA2F7),   // blue
+            secondary: Color::from_u32(0xff9e64), // orange
+            success: Color::from_u32(0x9ECE6A),   // green
+            error: Color::from_u32(0xf7768e),     // red
+            supports_alpha: true,
+        },
+        Theme {
+            name: "monokai",
+            fg: Color::from_u32(0xF8F8F2),
+            bg: Color::from_u32(0x272822),
+            primary: Color::from_u32(0xF92672),   // pink
+            secondary: Color::from_u32(0xA6E22E), // green
+            success: Color::from_u32(0xA6E22E),   // green
+            error: Color::from_u32(0xF92672),     // pink also serves well as error color
+            supports_alpha: true,
+        },
+        Theme {
+            name: "galaxy",
+            fg: Color::from_u32(0xC0CAF5),
+            bg: Color::from_u32(0x0F0F1F),
+            primary: Color::from_u32(0xC45AFF),
+            secondary: Color::from_u32(0xa684e8),
+            success: Color::from_u32(0x50FA7B), // bright green
+            error: Color::from_u32(0xFF4500),
+            supports_alpha: true,
+        },
+    ]
+}
+
+fn get_theme(theme_name: &str) -> Theme {
+    let themes = get_themes();
+    themes.iter().find(|t| t.name == theme_name).unwrap().clone()
 }

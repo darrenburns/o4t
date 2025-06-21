@@ -9,6 +9,7 @@ use ratatui::prelude::{Line, Widget};
 use ratatui::style::{Color, Styled, Stylize};
 use ratatui::widgets::Clear;
 use ratatui::{
+    Frame,
     layout::Constraint,
     layout::Constraint::{Length, Min},
     layout::Direction,
@@ -18,10 +19,10 @@ use ratatui::{
     style::{Modifier, Style},
     text::{Span, Text},
     widgets::{Block, Padding, Paragraph, Wrap},
-    Frame,
 };
 use std::cmp::max;
 use std::rc::Rc;
+use std::thread::current;
 use tachyonfx::{EffectRenderer, Shader, ToRgbComponents};
 use unicode_width::UnicodeWidthStr;
 
@@ -29,7 +30,7 @@ use unicode_width::UnicodeWidthStr;
 struct ResultData {
     pub value: String,
     pub subtext: String,
-    pub theme: Rc<Theme>,
+    pub theme: Theme,
 }
 
 impl Widget for ResultData {
@@ -47,10 +48,11 @@ impl Widget for ResultData {
 }
 
 pub fn ui(screen_frame: &mut Frame, app: &mut App) {
+    let current_theme = app.get_current_theme();
     Clear.render(screen_frame.area(), screen_frame.buffer_mut());
     Block::default()
-        .fg(app.theme.fg)
-        .bg(app.theme.bg)
+        .fg(current_theme.fg)
+        .bg(current_theme.bg)
         .render(screen_frame.area(), screen_frame.buffer_mut());
     match app.current_screen {
         Screen::Game => build_game_screen(screen_frame, app),
@@ -59,6 +61,7 @@ pub fn ui(screen_frame: &mut Frame, app: &mut App) {
 }
 
 fn build_game_screen(screen_frame: &mut Frame, app: &mut App) {
+    let current_theme = app.get_current_theme();
     let screen_sections = Layout::default()
         .horizontal_margin(3)
         .vertical_margin(1)
@@ -73,7 +76,7 @@ fn build_game_screen(screen_frame: &mut Frame, app: &mut App) {
     // Header (actual render call is at bottom since we may need to include debug info).
     if app.is_debug_mode {
         let debug_text = Line::from(vec![Span::raw("debug: "), Span::raw(&app.debug_string)]);
-        let header = Paragraph::new(debug_text).bg(app.theme.bg);
+        let header = Paragraph::new(debug_text).bg(current_theme.bg);
         screen_frame.render_widget(header, screen_sections[0]);
     } else {
         let header = build_header(app);
@@ -91,7 +94,7 @@ fn build_game_screen(screen_frame: &mut Frame, app: &mut App) {
     let mut cursor_offset = 0;
     for (index, word) in words.iter().enumerate() {
         let mut char_style = Style::default()
-            .fg(app.theme.fg)
+            .fg(current_theme.fg)
             .add_modifier(Modifier::DIM);
         let user_attempt = &app.words[index].user_attempt;
 
@@ -163,7 +166,7 @@ fn build_game_screen(screen_frame: &mut Frame, app: &mut App) {
     // The game timer - shows as dim until the game starts.
     let game_time_remaining_secs = app.game_time_remaining_millis().div_ceil(1000);
     let mut timer_style = Style::default()
-        .fg(app.theme.primary)
+        .fg(current_theme.primary)
         .add_modifier(Modifier::DIM);
 
     if app.game_active {
@@ -181,7 +184,7 @@ fn build_game_screen(screen_frame: &mut Frame, app: &mut App) {
         game_time_remaining_secs.to_string(),
         timer_style,
     ))
-    .bg(app.theme.bg)
+    .bg(current_theme.bg)
     .block(Block::default().padding(Padding::horizontal(h_pad)));
     screen_frame.render_widget(game_timer, timer_section);
 
@@ -214,9 +217,9 @@ fn build_game_screen(screen_frame: &mut Frame, app: &mut App) {
                     grapheme.symbol,
                     grapheme
                         .style
-                        .patch(grapheme.style.fg.map_or(app.theme.fg, |fg| {
-                            if app.theme.supports_alpha {
-                                blend_colors(fg, app.theme.bg, line_alpha)
+                        .patch(grapheme.style.fg.map_or(current_theme.fg, |fg| {
+                            if current_theme.supports_alpha {
+                                blend_colors(fg, current_theme.bg, line_alpha)
                             } else {
                                 fg
                             }
@@ -263,19 +266,20 @@ fn build_game_screen(screen_frame: &mut Frame, app: &mut App) {
 }
 
 fn build_header(app: &App) -> Paragraph<'static> {
+    let current_theme = app.get_current_theme();
     let header_block = Block::default()
         .padding(Padding::horizontal(1))
-        .bg(app.theme.bg);
+        .bg(current_theme.bg);
     let mut title_text = Line::styled(
         "o4t ",
         Style::default()
-            .fg(app.theme.primary)
+            .fg(current_theme.primary)
             .add_modifier(Modifier::BOLD),
     );
     title_text += Span::styled(
         env!("CARGO_PKG_VERSION"),
         Style::default()
-            .fg(app.theme.fg)
+            .fg(current_theme.fg)
             .add_modifier(Modifier::DIM)
             .remove_modifier(Modifier::BOLD),
     );
@@ -284,6 +288,7 @@ fn build_header(app: &App) -> Paragraph<'static> {
 }
 
 fn build_score_screen(screen_frame: &mut Frame, app: &mut App) {
+    let current_theme = app.get_current_theme();
     let [header_rect, body_rect, footer_rect] = Layout::default()
         .horizontal_margin(3)
         .vertical_margin(1)
@@ -301,32 +306,32 @@ fn build_score_screen(screen_frame: &mut Frame, app: &mut App) {
     let score = &app.score;
     let score_data = vec![
         ResultData {
-            theme: Rc::clone(&app.theme),
+            theme: current_theme.clone(),
             value: format!("{:.0} ", score.wpm),
             subtext: "wpm".to_string(),
         },
         ResultData {
-            theme: Rc::clone(&app.theme),
+            theme: current_theme.clone(),
             value: format!("{:.0}%", score.accuracy * 100.),
             subtext: "accuracy".to_string(),
         },
         ResultData {
-            theme: Rc::clone(&app.theme),
+            theme: current_theme.clone(),
             value: score.character_hits.to_string(),
             subtext: "hits".to_string(),
         },
         ResultData {
-            theme: Rc::clone(&app.theme),
+            theme: current_theme.clone(),
             value: score.character_misses.to_string(),
             subtext: "misses".to_string(),
         },
         ResultData {
-            theme: Rc::clone(&app.theme),
+            theme: current_theme.clone(),
             value: score.best_char_streak.to_string(),
             subtext: "streak".to_string(),
         },
         ResultData {
-            theme: Rc::clone(&app.theme),
+            theme: current_theme.clone(),
             value: score.num_words.to_string(),
             subtext: "words".to_string(),
         },
@@ -348,12 +353,19 @@ fn build_score_screen(screen_frame: &mut Frame, app: &mut App) {
     // If the score is perfect, then we've added an extra constraint to insert "PERFECT" text,
     // so skip that as it's not one of the "table cells" we'll insert our data into.
     let num_skips = if is_perfect_score { 1 } else { 0 };
-    let cells = rows.iter().skip(num_skips).flat_map(|&row| horizontal.split(row).to_vec()).collect::<Vec<_>>();
+    let cells = rows
+        .iter()
+        .skip(num_skips)
+        .flat_map(|&row| horizontal.split(row).to_vec())
+        .collect::<Vec<_>>();
 
     if is_perfect_score {
         let perfect_score_section = rows.iter().next().unwrap();
         screen_frame.render_widget(
-            Line::styled("Perfect!", Style::default().fg(app.theme.secondary).italic()),
+            Line::styled(
+                "Perfect!",
+                Style::default().fg(current_theme.secondary).italic(),
+            ),
             *perfect_score_section,
         );
     }
@@ -363,22 +375,19 @@ fn build_score_screen(screen_frame: &mut Frame, app: &mut App) {
 
     let load_effect = &mut app.load_results_screen_effect;
     if load_effect.running() {
-        screen_frame.render_effect(
-            load_effect,
-            body_rect,
-            app.last_tick_duration.into(),
-        );
+        screen_frame.render_effect(load_effect, body_rect, app.last_tick_duration.into());
     }
     build_footer(screen_frame, footer_rect, app, false, true);
 }
 
 fn build_footer(
     screen_frame: &mut Frame,
-    rect: Rect ,
+    rect: Rect,
     app: &mut App,
     show_scoring: bool,
     show_reset: bool,
 ) {
+    let current_theme = app.get_current_theme();
     let score_constraint = if show_scoring { Min(10) } else { Max(0) };
     let footer_sections: [Rect; 2] = Layout::horizontal([Constraint::Fill(1), score_constraint])
         .flex(SpaceBetween)
@@ -386,12 +395,12 @@ fn build_footer(
 
     let keys_block = Block::default()
         .padding(Padding::left(1))
-        .fg(app.theme.primary)
-        .bg(app.theme.bg);
+        .fg(current_theme.primary)
+        .bg(current_theme.bg);
 
     let key_style = Style::default().add_modifier(Modifier::BOLD);
     let value_style = Style::default()
-        .fg(app.theme.fg)
+        .fg(current_theme.fg)
         .add_modifier(Modifier::DIM);
     let mut keys = Line::from(vec![
         Span::styled("ESC ", key_style),
@@ -412,8 +421,8 @@ fn build_footer(
         let score = &app.score;
         let score_block = Block::default()
             .padding(Padding::right(1))
-            .fg(app.theme.primary)
-            .bg(app.theme.bg);
+            .fg(current_theme.primary)
+            .bg(current_theme.bg);
 
         let accuracy = if app.game_active && !score.accuracy.is_nan() {
             format!("{:.0}%", score.accuracy * 100.0)
@@ -428,10 +437,10 @@ fn build_footer(
 
         let score_text = Line::from(vec![
             Span::raw("acc "),
-            Span::raw(accuracy).fg(app.theme.fg).dim(),
-            Span::raw("  ").fg(app.theme.fg).dim(),
+            Span::raw(accuracy).fg(current_theme.fg).dim(),
+            Span::raw("  ").fg(current_theme.fg).dim(),
             Span::raw("wpm "),
-            Span::raw(wpm).fg(app.theme.fg).dim(),
+            Span::raw(wpm).fg(current_theme.fg).dim(),
         ]);
         let score_text = Text::from(score_text);
         let score_paragraph = Paragraph::new(score_text)
@@ -451,6 +460,7 @@ fn build_styled_word(
     is_current_word: bool,
     is_past_word: bool,
 ) -> usize {
+    let current_theme = app.get_current_theme();
     let mut total_offset = 0;
     let zipped_chars = expected_word
         .chars()
@@ -465,16 +475,21 @@ fn build_styled_word(
             total_offset += span.width();
             words_text.push_span(span);
         } else {
-            let span = Span::styled(expected_char.to_string(), char_style.fg(app.theme.error));
+            let span = Span::styled(
+                expected_char.to_string(),
+                char_style.fg(current_theme.error),
+            );
             words_text.push_span(span);
         }
     }
+
+    let current_theme = app.get_current_theme();
 
     // Render text we expected the user to type that they didn't type
     let mut missed_char_style = char_style;
     if is_past_word {
         missed_char_style = missed_char_style
-            .fg(app.theme.error)
+            .fg(current_theme.error)
             .add_modifier(Modifier::UNDERLINED);
     }
 
@@ -504,7 +519,7 @@ fn build_styled_word(
     let extra_chars_span = Span::styled(
         extra_chars_iter.collect::<String>(),
         char_style
-            .fg(app.theme.error)
+            .fg(current_theme.error)
             .add_modifier(Modifier::CROSSED_OUT),
     );
     words_text.push_span(extra_chars_span);
@@ -521,17 +536,15 @@ fn center(area: Rect, horizontal: Constraint, vertical: Constraint) -> Rect {
     area
 }
 
-fn center_vertical(area: Rect, height: u16) -> Rect {
-    let [area] = Layout::vertical([Length(height)]).flex(Center).areas(area);
-    area
-}
-
 fn cursor_type_to_ratatui_style(cursor_style: &CursorType, app: &App) -> Style {
+    let current_theme = app.get_current_theme();
     match cursor_style {
-        CursorType::Block => Style::default().fg(app.theme.bg).bg(app.theme.secondary),
+        CursorType::Block => Style::default()
+            .fg(current_theme.bg)
+            .bg(current_theme.secondary),
         CursorType::Underline => Style::default()
             .underlined()
-            .underline_color(app.theme.secondary),
+            .underline_color(current_theme.secondary),
         CursorType::None => Style::default(),
     }
 }
