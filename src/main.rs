@@ -57,7 +57,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let config: Config = Figment::new()
         .merge(Toml::file(config_file))
         .merge(Env::prefixed("O4T_"))
-        .merge(Serialized::defaults(Config::parse()))
+        .join(Serialized::defaults(Config::parse()))
         .extract()?;
 
     let mut app = App::with_config(config);

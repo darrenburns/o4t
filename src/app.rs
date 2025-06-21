@@ -111,6 +111,7 @@ pub fn load_score_screen_effect() -> Effect {
 
 #[derive(ValueEnum, Clone, Debug, Copy, Serialize, Deserialize)]
 #[clap(rename_all = "kebab-case")]
+#[serde(rename_all = "kebab-case")]
 pub enum CursorType {
     Block,
     Underline,
