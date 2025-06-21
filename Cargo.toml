@@ -5,10 +5,14 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+clap = { version = "4.5.40", features = ["derive"] }
 derive_setters = "0.1.7"
+etcetera = "0.10.0"
+figment = { version = "0.10.19", features = ["toml", "env"] }
 rand = "0.9.1"
 ratatui = "0.29.0"
 tachyonfx = "0.15.0"
 tokio = { version = "1.45.1", features = ["full"] }
 unicode-segmentation = "1.12.0"
 unicode-width = "0.2.0"
+serde = { version = "1.0.219", features = ["derive"] }

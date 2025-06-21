@@ -1,13 +1,16 @@
 use crate::theme::Theme;
-use crate::words;
+use crate::{words, Config};
+use derive_setters::Setters;
 use rand::seq::IteratorRandom;
 use ratatui::prelude::Color;
 use std::collections::HashMap;
 use std::ops::Div;
 use std::rc::Rc;
 use std::time::Duration;
+use clap::ValueEnum;
+use serde::{Deserialize, Serialize};
 use tachyonfx::Interpolation::QuadOut;
-use tachyonfx::{fx, Effect, Interpolation, Motion};
+use tachyonfx::{fx, Effect};
 
 pub enum Screen {
     Game,
@@ -69,6 +72,7 @@ impl WordAttempt {
 }
 
 // Holds the state for the app
+#[derive(Setters)]
 pub struct App {
     // the current input the user has typed while trying to type words[0]
     pub current_user_input: String,
@@ -93,6 +97,8 @@ pub struct App {
 
     pub theme: Rc<Theme>,
     pub cursor_style: CursorType,
+    pub config: Config,
+
 }
 
 pub fn load_words_effect() -> Effect {
@@ -103,6 +109,8 @@ pub fn load_score_screen_effect() -> Effect {
     fx::coalesce((180, QuadOut))
 }
 
+#[derive(ValueEnum, Clone, Debug, Copy, Serialize, Deserialize)]
+#[clap(rename_all = "kebab-case")]
 pub enum CursorType {
     Block,
     Underline,
@@ -110,14 +118,14 @@ pub enum CursorType {
 }
 
 impl App {
-    pub fn new() -> App {
-        let theme = Rc::new(get_theme("monokai"));
+
+    pub fn with_config(config: Config) -> App {
         App {
             current_user_input: String::new(),
             current_word_offset: 0,
             words: generate_words(),
             current_screen: Screen::Game,
-            time_remaining: DEFAULT_GAME_LENGTH,
+            time_remaining: Duration::from_secs(config.time as u64),
             game_active: false,
             millis_at_current_game_start: 0,
             current_millis: 0,
@@ -127,13 +135,15 @@ impl App {
             last_tick_duration: Duration::ZERO,
             is_debug_mode: false, // TODO - make cli switch
             debug_string: "".to_string(),
-            theme: Rc::clone(&theme),
-            cursor_style: CursorType::Underline,
+            theme: get_theme(&config.theme),
+            cursor_style: config.cursor,
+            config,
         }
     }
 
     pub fn reset_game(&mut self) {
-        *self = App::new();
+        let config = self.config.clone();
+        *self = App::with_config(config);
     }
 
     pub fn game_time_elapsed_millis(&self) -> u64 {
@@ -223,8 +233,8 @@ fn generate_words() -> Vec<WordAttempt> {
         .collect()
 }
 
-fn get_theme(theme_name: &str) -> Theme {
-    let mut themes: HashMap<&str, Theme> = HashMap::from([
+fn get_theme(theme_name: &str) -> Rc<Theme> {
+    let themes: HashMap<&str, Theme> = HashMap::from([
         (
             "terminal-yellow",
             Theme {
@@ -346,6 +356,6 @@ fn get_theme(theme_name: &str) -> Theme {
             },
         ),
     ]);
-    let theme = themes.get_mut(theme_name).unwrap();
-    theme.clone()
+    let theme = themes.get(theme_name).unwrap();
+    Rc::new(theme.clone())
 }

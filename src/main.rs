@@ -1,28 +1,46 @@
-use crate::app::{load_score_screen_effect, load_words_effect, App, Screen};
+use crate::app::CursorType;
+use figment::providers::Env;
+use crate::app::{App, Screen, load_score_screen_effect, load_words_effect};
 use crate::ui::ui;
+use clap::Parser;
+use etcetera::{BaseStrategy, choose_base_strategy};
+use figment::{Figment};
+use figment::providers::{Format, Serialized, Toml,};
+use ratatui::Terminal;
 use ratatui::backend::{Backend, CrosstermBackend};
 use ratatui::crossterm::event::{
     DisableMouseCapture, EnableMouseCapture, Event, KeyCode, KeyModifiers,
 };
 use ratatui::crossterm::terminal::{
-    disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen,
+    EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode, enable_raw_mode,
 };
 use ratatui::crossterm::{event, execute};
-use ratatui::Terminal;
+use serde::{Deserialize, Serialize};
 use std::cmp::max;
 use std::error::Error;
 use std::time::Instant;
 use std::{io, thread};
-use std::rc::Rc;
 use tachyonfx::Duration;
 use tokio::sync::mpsc;
 use tokio::time::interval;
 
 mod app;
+mod theme;
 mod ui;
 mod words;
 mod wrap;
-mod theme;
+
+#[derive(Parser, Debug, Serialize, Deserialize, Clone)]
+pub struct Config {
+    #[clap(short, long, value_parser, default_value_t = 30)]
+    pub time: usize,
+    #[clap(long, value_parser, default_value_t = String::from("tokyo-night"))]
+    pub theme: String,
+    #[clap(long, value_parser, default_value_t = 60)]
+    pub target_wpm: usize,
+    #[arg(short, long, value_enum, value_name="STYLE", default_value_t=CursorType::Underline)]
+    pub cursor: CursorType,
+}
 
 fn main() -> Result<(), Box<dyn Error>> {
     enable_raw_mode()?;
@@ -32,7 +50,17 @@ fn main() -> Result<(), Box<dyn Error>> {
     let backend = CrosstermBackend::new(stderr);
     let mut terminal = Terminal::new(backend)?;
 
-    let mut app = App::new();
+    // Load config in order of precedence:
+    // CLI > Env > config file (CLI highest precedence)
+    let xdg = choose_base_strategy().unwrap();
+    let config_file = xdg.config_dir().join("config.toml");
+    let config: Config = Figment::new()
+        .merge(Toml::file(config_file))
+        .merge(Env::prefixed("O4T_"))
+        .merge(Serialized::defaults(Config::parse()))
+        .extract()?;
+
+    let mut app = App::with_config(config);
     let res = run_app(&mut terminal, &mut app);
 
     disable_raw_mode()?;
