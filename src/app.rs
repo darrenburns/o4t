@@ -1,17 +1,16 @@
 use crate::theme::Theme;
-use crate::{Config, words};
+use crate::{words, Config};
 use clap::ValueEnum;
 use derive_setters::Setters;
 use rand::seq::IteratorRandom;
 use ratatui::prelude::Color;
+use ratatui::style::{Style, Stylize};
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 use std::ops::Div;
 use std::rc::Rc;
 use std::time::Duration;
-use ratatui::style::{Style, Stylize};
-use tachyonfx::Interpolation::{QuadIn, QuadOut};
-use tachyonfx::{Effect, Interpolation, fx};
+use tachyonfx::Interpolation::QuadOut;
+use tachyonfx::{fx, Effect};
 
 pub enum Screen {
     Game,
