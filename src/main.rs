@@ -33,20 +33,19 @@ mod wrap;
 
 #[derive(Parser, Debug, Serialize, Deserialize, Clone)]
 pub struct Config {
-    #[clap(short, long, value_parser, default_value_t = 30)]
+    #[clap(short, long, value_parser, value_name="SECS", default_value_t = 30)]
     pub time: usize,
-    #[clap(long, value_parser, default_value_t = String::from("tokyo-night"))]
+    #[clap(long, value_parser, value_name="THEME_NAME", default_value_t = String::from("tokyo-night"))]
     pub theme: String,
     #[clap(long, value_parser, default_value_t = 0)]
     pub target_wpm: usize,
     #[clap(short, long, value_enum, value_name="STYLE", default_value_t=CursorType::Underline)]
     pub cursor: CursorType,
-    #[clap(long, value_enum, default_value_t = CurrentWord::Bold)]
+    #[clap(long, value_enum, value_name="FOCUS_STYLE",default_value_t = CurrentWord::Bold)]
     pub current_word: CurrentWord,
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
-    enable_raw_mode()?;
     let mut stderr = io::stderr();
     execute!(stderr, EnterAlternateScreen, EnableMouseCapture)?;
 
@@ -63,9 +62,11 @@ fn main() -> Result<(), Box<dyn Error>> {
         .join(Serialized::defaults(Config::parse()))
         .extract()?;
 
-    let mut app = App::with_config(Rc::from(config));
-    let res = run_app(&mut terminal, &mut app);
 
+    let mut app = App::with_config(Rc::from(config));
+
+    enable_raw_mode()?;
+    let res = run_app(&mut terminal, &mut app);
     disable_raw_mode()?;
     execute!(
         terminal.backend_mut(),

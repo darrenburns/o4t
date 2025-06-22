@@ -5,7 +5,7 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-clap = { version = "4.5.40", features = ["derive"] }
+clap = { version = "4.5.40", features = ["derive", "wrap_help"] }
 derive_setters = "0.1.7"
 etcetera = "0.10.0"
 figment = { version = "0.10.19", features = ["toml", "env"] }
