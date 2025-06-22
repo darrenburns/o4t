@@ -32,9 +32,11 @@ For example, you could invoke o4t via the command line like so `O4T_CURRENT_WORD
 
 ## Themes
 
-o4t supports various themes, like `dracula`:
+o4t supports various themes, like `dracula` and `tokyo-night`:
 
 <img width="765" alt="image" src="https://github.com/user-attachments/assets/efa3ea39-c4d1-41bd-bcab-02fe945d8275" />
+
+<img width="756" alt="image" src="https://github.com/user-attachments/assets/839e573c-9c27-4d5d-a9d8-ef3825668bc5" />
 
 Supported themes: `terminal-yellow`, `terminal-cyan`, `nord`, `catppuccin-mocha`, `dracula`, `gruvbox`, `solarized-dark`, `tokyo-night`, `monokai`, and `galaxy`.
 
