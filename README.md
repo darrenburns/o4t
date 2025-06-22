@@ -15,9 +15,7 @@ Right now, you'll have to check out the repo and run it with `cargo run`, but it
 
 ## Usage
 
-Run `o4t` via the command line.
-
-Exit with <kbd>Esc</kbd>. Start typing the words on screen to immediately start a typing test. Press <kbd>Tab</kbd> to reset the test and pause.
+Run `o4t` via the command line. Start typing the words on screen to immediately start a typing test.
 
 ### Configuration 
 
