@@ -1,4 +1,4 @@
-use crate::app::{WordHighlight, CursorType};
+use crate::app::{CurrentWord, CursorType};
 use crate::app::{App, Screen, load_score_screen_effect, load_words_effect};
 use crate::ui::ui;
 use clap::Parser;
@@ -37,12 +37,12 @@ pub struct Config {
     pub time: usize,
     #[clap(long, value_parser, default_value_t = String::from("tokyo-night"))]
     pub theme: String,
-    #[clap(long, value_parser, default_value_t = 60)]
+    #[clap(long, value_parser, default_value_t = 0)]
     pub target_wpm: usize,
     #[clap(short, long, value_enum, value_name="STYLE", default_value_t=CursorType::Underline)]
     pub cursor: CursorType,
-    #[clap(long, value_enum, default_value_t = WordHighlight::Bold)]
-    pub word_highlight: WordHighlight,
+    #[clap(long, value_enum, default_value_t = CurrentWord::Bold)]
+    pub current_word: CurrentWord,
 }
 
 fn main() -> Result<(), Box<dyn Error>> {

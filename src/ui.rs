@@ -1,4 +1,4 @@
-use crate::app::{App, WordHighlight, CursorType, Screen};
+use crate::app::{App, CurrentWord, CursorType, Screen};
 use crate::theme::Theme;
 use crate::wrap::{LineComposer, WordWrapper};
 use ratatui::buffer::Buffer;
@@ -105,9 +105,9 @@ fn build_game_screen(screen_frame: &mut Frame, app: &mut App) {
 
         if app.current_word_offset == index {
             // Check which characters match and which ones don't in order to build up the styling for this word.
-            match app.config.word_highlight {
-                WordHighlight::Bold => char_style = char_style.add_modifier(Modifier::BOLD),
-                WordHighlight::Highlight if current_theme.supports_alpha => {
+            match app.config.current_word {
+                CurrentWord::Bold => char_style = char_style.add_modifier(Modifier::BOLD),
+                CurrentWord::Highlight if current_theme.supports_alpha => {
                     char_style = char_style.bg(
                         blend_colors(current_theme.fg, current_theme.bg, 0.08)
                     )
@@ -133,7 +133,7 @@ fn build_game_screen(screen_frame: &mut Frame, app: &mut App) {
             }
         } else if user_attempt.is_empty() {
             // It's not the current word, and there's no attempt yet, basic rendering.
-            let current_word_span = Span::styled(word, char_style).dim();
+            let current_word_span = Span::styled(word, char_style.patch(current_theme.character_upcoming));
             words_text.push_span(current_word_span);
             if index != words.len() - 1 {
                 words_text.push_span(Span::default().content(" "));
@@ -517,7 +517,11 @@ fn build_styled_word(
             words_text.push_span(missed_chars_span);
         }
     }
-
+    
+    let is_upcoming = !is_current_word && !is_past_word;
+    if is_upcoming {
+        missed_char_style = missed_char_style.patch(current_theme.character_upcoming)
+    }
     let span = Span::styled(missed_chars_iter.collect::<String>(), missed_char_style);
     total_offset += span.width();
     words_text.push_span(span);

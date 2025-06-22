@@ -11,5 +11,6 @@ pub struct Theme {
     pub(crate) success: Color,
     pub(crate) character_match: Style,
     pub(crate) character_mismatch: Style,
+    pub(crate) character_upcoming: Style,
     pub(crate) supports_alpha: bool,
 }
