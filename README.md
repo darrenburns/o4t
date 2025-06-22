@@ -28,7 +28,7 @@ Pass config to o4t via the CLI, environment variables, or `config.toml`.
 
 To use environment variables, simply take the name of the CLI option, prefix it with `O4T_`, upper-case it, and convert `-` to `_`. 
 
-For example, you could invoke o4t via the command line like so: `O4T_CURRENT_WORD=bold o4t`.
+For example, you could invoke o4t via the command line like so `O4T_CURRENT_WORD=bold o4t`. This is equivalent to `o4t --current-word bold`.
 
 ## Themes
 
