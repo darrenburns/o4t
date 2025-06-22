@@ -6,10 +6,18 @@ o4t, pronounced "oat", is a typing game that runs in your terminal.
 
 It's heavily inspired by [monkeytype](https://monkeytype.com).
 
+## Installation
+
 > [!IMPORTANT]  
 > o4t isn't yet released and I'm actively working on the `main` branch.
 
-## Config
+Right now, you'll have to check out the repo and run it with `cargo run`, but it might not work. Sorry!
+
+## Usage
+
+Run `o4t` via the command line. Exit with <kbd>Esc</kbd>. Start typing to immediately launch into a new typing session.
+
+### Configuration 
 
 Pass config to o4t via the CLI, environment variables, or a config file.
 
@@ -27,3 +35,11 @@ o4t supports various themes, like `dracula`:
 Supported themes: `terminal-yellow`, `terminal-cyan`, `nord`, `catppuccin-mocha`, `dracula`, `gruvbox`, `solarized-dark`, `tokyo-night`, `monokai`, and `galaxy`.
 
 Themes prefixed with `terminal-` use your terminal emulator's ANSI colours.
+
+## History
+
+This hasn't been implemented, but I'm considering saving data for each session in JSONL format.
+
+## More Info
+
+- WPM is computed as `((character_matches + num_correct_words) / 5.) * (60. / seconds_elapsed)`.
