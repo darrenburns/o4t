@@ -46,4 +46,6 @@ This hasn't been implemented, but I'm considering saving data for each session i
 
 ## More Info
 
-- WPM is computed as `((character_matches + num_correct_words) / 5.) * (60. / seconds_elapsed)`.
+- _WPM_ is "Words Per Minute", and is computed as `((character_matches + num_correct_words) / 5.) * (60. / seconds_elapsed)`. There is currently no penalty for incorrectly typed words, meaning if you miss one character in a word, the other correctly typed characters will still be counted.
+- _Accuracy_ is the percentage of all characters typed during the game that matched the expected character. This means that if you've made corrections during a game, you will not have 100% accuracy.
+- On the score screen, "Perfect!" will only appear if you made no mistakes at any time during the game.
