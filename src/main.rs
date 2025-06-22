@@ -1,7 +1,7 @@
 use crate::app::{CurrentWord, CursorType};
 use crate::app::{App, Screen, load_score_screen_effect, load_words_effect};
 use crate::ui::ui;
-use clap::Parser;
+use clap::{CommandFactory, FromArgMatches, Parser};
 use etcetera::{BaseStrategy, choose_base_strategy};
 use figment::Figment;
 use figment::providers::Env;
@@ -47,25 +47,36 @@ pub struct Config {
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
-    let mut stderr = io::stderr();
-    execute!(stderr, EnterAlternateScreen, EnableMouseCapture)?;
-
-    let backend = CrosstermBackend::new(stderr);
-    let mut terminal = Terminal::new(backend)?;
-
-    // Load config in order of precedence:
-    // CLI > Env > config file (CLI highest precedence)
     let xdg = choose_base_strategy().unwrap();
-    let config_file = xdg.config_dir().join("config.toml");
+    let config_file = xdg.config_dir().join("o4t/config.toml");
+    let mut cmd = Config::command();
+    let dynamic_help_text = format!(
+        "CONFIGURATION:\n    Config file: {}\n    Environment variables are prefixed with O4T_",
+        config_file.display()
+    );
+    cmd = cmd.after_help(dynamic_help_text);
+    let matches = cmd.get_matches_mut();
+    let parsed_cli = match Config::from_arg_matches(&matches) {
+        Ok(config) => {
+            config
+        },
+        Err(err) => {
+            err.exit();
+        }
+    };
+
     let config: Config = Figment::new()
         .merge(Toml::file(config_file))
         .merge(Env::prefixed("O4T_"))
-        .join(Serialized::defaults(Config::parse()))
+        .join(Serialized::defaults(parsed_cli))
         .extract()?;
-
 
     let mut app = App::with_config(Rc::from(config));
 
+    let mut stderr = io::stderr();
+    execute!(stderr, EnterAlternateScreen, EnableMouseCapture)?;
+    let backend = CrosstermBackend::new(stderr);
+    let mut terminal = Terminal::new(backend)?;
     enable_raw_mode()?;
     let res = run_app(&mut terminal, &mut app);
     disable_raw_mode()?;
