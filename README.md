@@ -21,7 +21,7 @@ Run `o4t` via the command line. Start typing the words on screen to immediately 
 
 Pass config to o4t via the CLI, environment variables, or `config.toml`.
 
-- `-t`/`--time`: the duration of sessions in seconds
+- `-t`/`--time`: the duration of games in seconds
 - `-c`/`--cursor`: either `underline`, `block`, or `none` - the type of cursor to use
 - `--theme`: the theme to use
 - `--current-word`: either `bold`, `highlight`, or `none` - how the word under the cursor should be highlighted
