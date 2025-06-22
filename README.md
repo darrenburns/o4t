@@ -6,6 +6,9 @@ o4t, pronounced "oat", is a typing game that runs in your terminal.
 
 It's heavily inspired by [monkeytype](https://monkeytype.com).
 
+> [!IMPORTANT]  
+> o4t isn't yet released and I'm actively working on the `main` branch.
+
 ## Config
 
 Pass config to o4t via the CLI, environment variables, or a config file.
