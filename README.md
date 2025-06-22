@@ -19,12 +19,16 @@ Run `o4t` via the command line. Exit with <kbd>Esc</kbd>. Start typing to immedi
 
 ### Configuration 
 
-Pass config to o4t via the CLI, environment variables, or a config file.
+Pass config to o4t via the CLI, environment variables, or `config.toml`.
 
 - `-t`/`--time`: the duration of sessions in seconds
 - `-c`/`--cursor`: either `underline`, `block`, or `none` - the type of cursor to use
 - `--theme`: the theme to use
 - `--current-word`: either `bold`, `highlight`, or `none` - how the word under the cursor should be highlighted
+
+To use environment variables, simply take the name of the CLI option, prefix it with `O4T_`, upper-case it, and convert `-` to `_`. 
+
+For example, `O4T_CURRENT_WORD=bold o4t`.
 
 ## Themes
 
