@@ -32,6 +32,7 @@ mod words;
 mod wrap;
 
 #[derive(Parser, Debug, Serialize, Deserialize, Clone)]
+#[command(version, about)]
 pub struct Config {
     #[clap(short, long, value_parser, value_name="SECS", default_value_t = 30)]
     pub time: usize,
