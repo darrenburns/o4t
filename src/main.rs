@@ -1,35 +1,29 @@
-use crate::app::{App, Screen, load_score_screen_effect, load_words_effect};
-use crate::app::{CurrentWord, CursorType};
+use crate::app::{load_score_screen_effect, load_words_effect, App, Screen};
+use crate::cli::Cli;
+use crate::config::Config;
 use crate::ui::ui;
-use clap::{ArgMatches, CommandFactory, FromArgMatches, Id, Parser};
-use etcetera::{BaseStrategy, choose_base_strategy};
-use figment::{Figment, Provider};
+use clap::{CommandFactory, FromArgMatches};
+use etcetera::{choose_base_strategy, BaseStrategy};
 use figment::providers::Env;
 use figment::providers::{Format, Serialized, Toml};
-use ratatui::Terminal;
+use figment::{Figment};
 use ratatui::backend::{Backend, CrosstermBackend};
 use ratatui::crossterm::event::{
     DisableMouseCapture, EnableMouseCapture, Event, KeyCode, KeyModifiers,
 };
 use ratatui::crossterm::terminal::{
-    EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode, enable_raw_mode,
+    disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen,
 };
 use ratatui::crossterm::{event, execute};
-use serde::{Deserialize, Serialize};
+use ratatui::Terminal;
 use std::cmp::max;
 use std::error::Error;
 use std::rc::Rc;
 use std::time::Instant;
 use std::{io, thread};
-use std::any::Any;
-use std::collections::{HashMap, HashSet};
-use clap::parser::ValueSource;
-use rand::TryRngCore;
 use tachyonfx::Duration;
 use tokio::sync::mpsc;
 use tokio::time::interval;
-use crate::cli::Cli;
-use crate::config::Config;
 
 mod app;
 mod theme;
