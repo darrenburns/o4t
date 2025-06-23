@@ -177,6 +177,7 @@ impl App {
     pub fn reset_game(&mut self) {
         let config = self.config.clone();
         *self = App::with_config(config).theme_name(self.theme_name.to_string());
+        self.load_words_effect = load_words_effect(self.get_current_theme().clone());
     }
 
     pub fn game_time_elapsed_millis(&self) -> u64 {
