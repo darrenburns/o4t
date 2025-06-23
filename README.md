@@ -41,6 +41,8 @@ theme = "gruvbox"
 time = 45
 ```
 
+CLI options have highest precedence, followed by environment variables, followed by `config.toml`.
+
 ## Themes
 
 o4t supports various themes, like `dracula` and `tokyo-night`:
