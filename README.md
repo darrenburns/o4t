@@ -41,7 +41,7 @@ theme = "gruvbox"
 time = 45
 ```
 
-CLI options have highest precedence, followed by environment variables, followed by `config.toml`.
+CLI options have the highest precedence, followed by environment variables, followed by `config.toml`.
 
 ## Themes
 
