@@ -102,7 +102,7 @@ pub struct App {
 
 pub fn load_words_effect(theme: Theme) -> Effect {
     fx::parallel(&[
-        fx::fade_from_fg(theme.secondary, (180, QuadOut)),
+        fx::fade_from_fg(theme.secondary, (200, QuadOut)),
         fx::coalesce((180, QuadOut)),
     ])
 }
@@ -280,7 +280,7 @@ fn get_themes() -> Vec<Theme> {
             supports_alpha: false,
             character_match: Style::default().not_dim(),
             character_mismatch: Style::default().fg(Color::Red),
-            character_upcoming: Style::default().dim(),
+            character_upcoming: Color::White,
         },
         Theme {
             name: "terminal-cyan",
@@ -293,7 +293,7 @@ fn get_themes() -> Vec<Theme> {
             supports_alpha: false,
             character_match: Style::default().not_dim(),
             character_mismatch: Style::default().fg(Color::Red),
-            character_upcoming: Style::default().dim(),
+            character_upcoming: Color::White,
         },
         Theme {
             name: "nord",
@@ -306,7 +306,7 @@ fn get_themes() -> Vec<Theme> {
             supports_alpha: true,
             character_match: Style::default().fg(Color::from_u32(0xA3BE8C)).not_dim(),
             character_mismatch: Style::default().fg(Color::from_u32(0xBF616A)),
-            character_upcoming: Style::default().fg(Color::from_u32(0xD8DEE9)),
+            character_upcoming: Color::from_u32(0xD8DEE9),
         },
         Theme {
             name: "catppuccin-mocha",
@@ -317,9 +317,9 @@ fn get_themes() -> Vec<Theme> {
             success: Color::from_u32(0xA6E3A1),   // Green
             error: Color::from_u32(0xF38BA8),     // Red
             supports_alpha: true,
-            character_match: Style::default().not_dim(),
+            character_match: Style::default().fg(Color::from_u32(0xa6e3a1)).not_dim(),
             character_mismatch: Style::default().fg(Color::from_u32(0xF38BA8)),
-            character_upcoming: Style::default().fg(Color::from_u32(0xCDD6F4)),
+            character_upcoming: Color::from_u32(0xCDD6F4),
         },
         Theme {
             name: "dracula",
@@ -332,7 +332,7 @@ fn get_themes() -> Vec<Theme> {
             supports_alpha: true,
             character_match: Style::default().fg(Color::from_u32(0x50FA7B)).not_dim(),
             character_mismatch: Style::default().fg(Color::from_u32(0xFF5555)),
-            character_upcoming: Style::default().fg(Color::from_u32(0xF8F8F2)),
+            character_upcoming: Color::from_u32(0xF8F8F2),
         },
         Theme {
             name: "gruvbox",
@@ -343,9 +343,9 @@ fn get_themes() -> Vec<Theme> {
             success: Color::from_u32(0xB8BB26),   // green
             error: Color::from_u32(0xFB4934),     // red
             supports_alpha: true,
-            character_match: Style::default().not_dim(),
+            character_match: Style::default().fg(Color::from_u32(0xFBF1C7)).not_dim(),
             character_mismatch: Style::default().fg(Color::from_u32(0xFB4934)),
-            character_upcoming: Style::default().fg(Color::from_u32(0xA89984)),  // fg4
+            character_upcoming: Color::from_u32(0xA89984),  // f4
         },
         Theme {
             name: "solarized-dark",
@@ -358,7 +358,7 @@ fn get_themes() -> Vec<Theme> {
             supports_alpha: true,
             character_match: Style::default().fg(Color::from_u32(0x859900)),
             character_mismatch: Style::default().fg(Color::from_u32(0xDC322F)),
-            character_upcoming: Style::default().fg(Color::from_u32(0x839496)),
+            character_upcoming: Color::from_u32(0x839496),
         },
         Theme {
             name: "tokyo-night",
@@ -369,22 +369,22 @@ fn get_themes() -> Vec<Theme> {
             success: Color::from_u32(0x9ECE6A),   // green
             error: Color::from_u32(0xf7768e),     // red
             supports_alpha: true,
-            character_match: Style::default().not_dim(),
+            character_match: Style::default().fg(Color::from_u32(0x9ECE6A)).not_dim(),
             character_mismatch: Style::default().fg(Color::from_u32(0xff9e64)),
-            character_upcoming: Style::default().fg(Color::from_u32(0x6584C9)),
+            character_upcoming: Color::from_u32(0x6584C9),
         },
         Theme {
             name: "monokai",
             fg: Color::from_u32(0xF8F8F2),
             bg: Color::from_u32(0x272822),
             primary: Color::from_u32(0xF92672),   // pink
-            secondary: Color::from_u32(0xA6E22E), // green
+            secondary: Color::from_u32(0xae81ff),
             success: Color::from_u32(0xA6E22E),   // green
             error: Color::from_u32(0xfd971f),
             supports_alpha: true,
-            character_match: Style::default().not_dim(),
+            character_match: Style::default().fg(Color::from_u32(0xA6E22E)),
             character_mismatch: Style::default().fg(Color::from_u32(0xfd971f)),
-            character_upcoming: Style::default().fg(Color::from_u32(0x999999)),
+            character_upcoming: Color::from_u32(0x999999),
         },
         Theme {
             name: "galaxy",
@@ -397,7 +397,7 @@ fn get_themes() -> Vec<Theme> {
             supports_alpha: true,
             character_match: Style::default().fg(Color::from_u32(0x50FA7B)).not_dim(),
             character_mismatch: Style::default().fg(Color::from_u32(0xFF4500)),
-            character_upcoming: Style::default().fg(Color::from_u32(0xC0CAF5)),
+            character_upcoming: Color::from_u32(0xC0CAF5),
         },
     ]
 }

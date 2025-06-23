@@ -107,7 +107,7 @@ fn build_game_screen(screen_frame: &mut Frame, app: &mut App) {
                 CurrentWord::Bold => char_style = char_style.add_modifier(Modifier::BOLD),
                 CurrentWord::Highlight if current_theme.supports_alpha => {
                     char_style = char_style.bg(
-                        blend_colors(current_theme.fg, current_theme.bg, 0.08)
+                        blend_colors(current_theme.character_upcoming, current_theme.bg, 0.08)
                     )
                 }
                 _ => {}
