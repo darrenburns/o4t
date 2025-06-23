@@ -9,7 +9,7 @@ It's heavily inspired by [monkeytype](https://monkeytype.com).
 ## Installation
 
 > [!IMPORTANT]  
-> o4t isn't yet released and I'm actively working on the `main` branch.
+> o4t isn't yet released, and I'm actively working on the `main` branch.
 
 Right now, you'll have to check out the repo and run it with `cargo run`, but it might not work. Sorry!
 
@@ -30,6 +30,17 @@ To use environment variables, simply take the name of the CLI option, prefix it 
 
 For example, you could invoke o4t via the command line like so `O4T_CURRENT_WORD=bold o4t`. This is equivalent to `o4t --current-word bold`.
 
+All config options can also be set via the `config.toml` file, and use snake case.
+The location of this file is shown in the output of `o4t --help`.
+Here's an example `config.toml`:
+
+```toml
+current_word = "highlight"
+cursor = "underline"
+theme = "gruvbox"
+time = 45
+```
+
 ## Themes
 
 o4t supports various themes, like `dracula` and `tokyo-night`:
@@ -44,7 +55,7 @@ Themes prefixed with `terminal-` use your terminal emulator's ANSI colours.
 
 ## History
 
-This hasn't been implemented, but I'm considering saving data for each session in JSONL format.
+This hasn't been implemented, but I'm considering saving data for each session in JSONL format or a local SQLite database.
 
 ## More Info
 

@@ -1,9 +1,9 @@
-use crate::app::{CurrentWord, CursorType};
 use crate::app::{App, Screen, load_score_screen_effect, load_words_effect};
+use crate::app::{CurrentWord, CursorType};
 use crate::ui::ui;
-use clap::{CommandFactory, FromArgMatches, Parser};
+use clap::{ArgMatches, CommandFactory, FromArgMatches, Id, Parser};
 use etcetera::{BaseStrategy, choose_base_strategy};
-use figment::Figment;
+use figment::{Figment, Provider};
 use figment::providers::Env;
 use figment::providers::{Format, Serialized, Toml};
 use ratatui::Terminal;
@@ -21,42 +21,35 @@ use std::error::Error;
 use std::rc::Rc;
 use std::time::Instant;
 use std::{io, thread};
+use std::any::Any;
+use std::collections::{HashMap, HashSet};
+use clap::parser::ValueSource;
+use rand::TryRngCore;
 use tachyonfx::Duration;
 use tokio::sync::mpsc;
 use tokio::time::interval;
+use crate::cli::Cli;
+use crate::config::Config;
 
 mod app;
 mod theme;
 mod ui;
 mod words;
 mod wrap;
-
-#[derive(Parser, Debug, Serialize, Deserialize, Clone)]
-#[command(version, about)]
-pub struct Config {
-    #[clap(short, long, value_parser, value_name="SECS", default_value_t = 30)]
-    pub time: usize,
-    #[clap(long, value_parser, value_name="THEME_NAME", default_value_t = String::from("tokyo-night"))]
-    pub theme: String,
-    #[clap(long, value_parser, default_value_t = 0)]
-    pub target_wpm: usize,
-    #[clap(short, long, value_enum, value_name="STYLE", default_value_t=CursorType::Underline)]
-    pub cursor: CursorType,
-    #[clap(long, value_enum, value_name="FOCUS_STYLE",default_value_t = CurrentWord::Bold)]
-    pub current_word: CurrentWord,
-}
+mod cli;
+mod config;
 
 fn main() -> Result<(), Box<dyn Error>> {
     let xdg = choose_base_strategy().unwrap();
     let config_file = xdg.config_dir().join("o4t/config.toml");
-    let mut cmd = Config::command();
+    let mut cmd = Cli::command();
     let dynamic_help_text = format!(
         "CONFIGURATION:\n    Config file: {}\n    Environment variables are prefixed with O4T_",
         config_file.display()
     );
     cmd = cmd.after_help(dynamic_help_text);
     let matches = cmd.get_matches_mut();
-    let parsed_cli = match Config::from_arg_matches(&matches) {
+    let parsed_cli = match Cli::from_arg_matches(&matches) {
         Ok(config) => {
             config
         },
@@ -64,11 +57,11 @@ fn main() -> Result<(), Box<dyn Error>> {
             err.exit();
         }
     };
-
     let config: Config = Figment::new()
+        .merge(Serialized::defaults(Config::default()))
         .merge(Toml::file(config_file))
         .merge(Env::prefixed("O4T_"))
-        .join(Serialized::defaults(parsed_cli))
+        .merge(Serialized::defaults(parsed_cli))
         .extract()?;
 
     let mut app = App::with_config(Rc::from(config));

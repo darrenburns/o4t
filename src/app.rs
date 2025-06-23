@@ -1,5 +1,5 @@
 use crate::theme::Theme;
-use crate::{words, Config};
+use crate::{words, Cli};
 use clap::ValueEnum;
 use derive_setters::Setters;
 use rand::seq::IteratorRandom;
@@ -11,6 +11,7 @@ use std::rc::Rc;
 use std::time::Duration;
 use tachyonfx::Interpolation::QuadOut;
 use tachyonfx::{fx, Effect};
+use crate::config::Config;
 
 pub enum Screen {
     Game,
