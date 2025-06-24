@@ -9,6 +9,7 @@ use ratatui::prelude::{Line, Widget};
 use ratatui::style::{Color, Stylize};
 use ratatui::widgets::Clear;
 use ratatui::{
+    Frame,
     layout::Constraint,
     layout::Constraint::{Length, Min},
     layout::Direction,
@@ -18,10 +19,10 @@ use ratatui::{
     style::{Modifier, Style},
     text::{Span, Text},
     widgets::{Block, Padding, Paragraph, Wrap},
-    Frame,
 };
 use std::cmp::max;
 use tachyonfx::{EffectRenderer, Shader, ToRgbComponents};
+use unicode_segmentation::UnicodeSegmentation;
 use unicode_width::UnicodeWidthStr;
 
 #[derive(Default, Debug)]
@@ -90,25 +91,53 @@ fn build_game_screen(screen_frame: &mut Frame, app: &mut App) {
 
     let mut words_text = Text::default();
     let mut cursor_offset = 0;
+    let mut ghost_offset = 0;
+
     for (index, word) in words.iter().enumerate() {
         let mut char_style = Style::default().fg(current_theme.fg);
         let user_attempt = &app.words[index].user_attempt;
 
+        let expected_word_num_graphemes = word.graphemes(false).count();
+
         // Compute the cursor offset
         if index < app.current_word_offset {
-            cursor_offset += max(app.words[index].user_attempt.width(), word.width());
+            cursor_offset += max(
+                app.words[index].user_attempt.graphemes(false).count(),
+                expected_word_num_graphemes,
+            );
         } else if index == app.current_word_offset {
-            cursor_offset += app.current_user_input.width();
+            let user_input_num_graphemes = app.current_user_input.graphemes(false).count();
+            cursor_offset += user_input_num_graphemes;
         }
+
+        // The ghost offset should ignore current user input and user attempts, and only look
+        // at the words the user is expected to type.
+        ghost_offset += expected_word_num_graphemes;
+        let mut ghost_cursor_word_offset = None;
+        match app.ghost_offset {
+            None => {}
+            Some(app_ghost_offset) => {
+                if ghost_offset >= (app_ghost_offset as usize) {
+                    // The ghost cursor is within this word.
+                    let offset_from_end_of_word = ghost_offset - (app_ghost_offset as usize);
+                    ghost_cursor_word_offset =
+                        Some(expected_word_num_graphemes.saturating_sub(offset_from_end_of_word));
+                }
+            }
+        }
+        
+        app.debug_string = format!("{:.2}", app.ghost_offset.unwrap_or(0.0));
 
         if app.current_word_offset == index {
             // Check which characters match and which ones don't in order to build up the styling for this word.
             match app.config.current_word {
                 CurrentWord::Bold => char_style = char_style.add_modifier(Modifier::BOLD),
                 CurrentWord::Highlight if current_theme.supports_alpha => {
-                    char_style = char_style.bg(
-                        blend_colors(current_theme.character_upcoming, current_theme.bg, 0.08)
-                    )
+                    char_style = char_style.bg(blend_colors(
+                        current_theme.character_upcoming,
+                        current_theme.bg,
+                        0.08,
+                    ))
                 }
                 _ => {}
             }
@@ -120,6 +149,7 @@ fn build_game_screen(screen_frame: &mut Frame, app: &mut App) {
                 word.to_string(),
                 true,
                 false,
+                ghost_cursor_word_offset,
             );
             if app.current_user_input.len() >= word.len() {
                 words_text.push_span(Span::styled(
@@ -131,7 +161,8 @@ fn build_game_screen(screen_frame: &mut Frame, app: &mut App) {
             }
         } else if user_attempt.is_empty() {
             // It's not the current word, and there's no attempt yet, basic rendering.
-            let current_word_span = Span::styled(word, char_style.patch(current_theme.character_upcoming));
+            let current_word_span =
+                Span::styled(word, char_style.patch(current_theme.character_upcoming));
             words_text.push_span(current_word_span);
             if index != words.len() - 1 {
                 words_text.push_span(Span::default().content(" "));
@@ -146,6 +177,7 @@ fn build_game_screen(screen_frame: &mut Frame, app: &mut App) {
                 word.to_string(),
                 false,
                 true,
+                ghost_cursor_word_offset,
             );
             if index != words.len() - 1 {
                 words_text.push_span(Span::default().content(" "));
@@ -463,9 +495,11 @@ fn build_styled_word(
     expected_word: String,
     is_current_word: bool,
     is_past_word: bool,
-) -> usize {
+    ghost_cursor_offset: Option<usize>,
+) {
     let current_theme = app.get_current_theme();
-    let mut total_offset = 0;
+    let ghost_cursor_style = Style::default().bg(Color::Blue); // TODO
+    let mut offset_in_word = 0;
     let zipped_chars = expected_word
         .chars()
         .zip(user_attempt.chars())
@@ -473,18 +507,28 @@ fn build_styled_word(
     let min_len = zipped_chars.len();
     for (expected_char, user_char) in zipped_chars {
         let mut style = char_style;
+        let mut span;
         if user_char == expected_char {
             style = style.patch(current_theme.character_match);
-            let span = Span::styled(expected_char.to_string(), style);
-            total_offset += span.width();
-            words_text.push_span(span);
+            span = Span::styled(expected_char.to_string(), style);
         } else {
-            let span = Span::styled(
+            span = Span::styled(
                 expected_char.to_string(),
                 char_style.patch(current_theme.character_mismatch),
             );
-            words_text.push_span(span);
         }
+        
+        match ghost_cursor_offset {
+            Some(ghost_cursor_offset) => {
+                if ghost_cursor_offset == offset_in_word {
+                    span = span.patch_style(ghost_cursor_style);
+                }
+            },
+            None => {}
+        }
+        
+        words_text.push_span(span);
+        offset_in_word += 1;
     }
 
     let current_theme = app.get_current_theme();
@@ -507,21 +551,18 @@ fn build_styled_word(
                 cursor_char.to_string(),
                 char_style.patch(cursor_type_to_ratatui_style(&app.cursor_style, app)),
             );
-            total_offset += missed_chars_span.width();
             words_text.push_span(missed_chars_span);
         } else {
             missed_chars_span = Span::styled(cursor_char.to_string(), missed_char_style);
-            total_offset += missed_chars_span.width();
             words_text.push_span(missed_chars_span);
         }
     }
-    
+
     let is_upcoming = !is_current_word && !is_past_word;
     if is_upcoming {
         missed_char_style = missed_char_style.patch(current_theme.character_upcoming)
     }
     let span = Span::styled(missed_chars_iter.collect::<String>(), missed_char_style);
-    total_offset += span.width();
     words_text.push_span(span);
 
     // Render extra chars that the user typed beyond the length of the word
@@ -533,8 +574,6 @@ fn build_styled_word(
             .add_modifier(Modifier::CROSSED_OUT),
     );
     words_text.push_span(extra_chars_span);
-
-    total_offset
 }
 
 fn center(area: Rect, horizontal: Constraint, vertical: Constraint) -> Rect {

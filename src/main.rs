@@ -107,7 +107,8 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
         terminal.draw(|f| ui(f, app))?;
 
         if let Ok(_) = rx.try_recv() {
-            app.current_millis = app.current_millis + app.last_tick_duration.as_millis() as u64;
+            let last_tick_millis = app.last_tick_duration.as_millis() as u64;
+            app.current_millis = app.current_millis + last_tick_millis;
             if app.game_time_remaining_millis() == 0 {
                 app.load_results_screen_effect = load_score_screen_effect();
                 app.game_active = false;
@@ -115,6 +116,20 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
             }
             if app.game_active {
                 app.refresh_internal_score();
+                if app.config.target_wpm > 0 {
+                    // Given the time elapsed since the last tick, how much should we move
+                    // the ghost cursor forward by?
+                    // If target_wpm is 60, then we expect to move 1 word (5 chars) + 1 space per second
+                    // So in the duration of a single tick, we expect to move:
+                    // 6 * (tick_duration_ms/1000ms)
+                    match app.ghost_offset {
+                        Some(current_ghost) => {
+                            let next_ghost = current_ghost + (6. * last_tick_millis as f64 / 1000.);
+                            app.ghost_offset = Some(next_ghost);
+                        }
+                        None => {}
+                    }   
+                }
             }
         }
 

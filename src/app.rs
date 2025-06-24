@@ -98,6 +98,10 @@ pub struct App {
     pub cursor_style: CursorType,
     pub themes: Vec<Theme>,
     pub config: Rc<Config>,
+
+    // The position of the ghost cursor (which moves based on config.target_wpm).
+    // The user can basically race against this cursor.
+    pub ghost_offset: Option<f64>
 }
 
 pub fn load_words_effect(theme: Theme) -> Effect {
@@ -146,11 +150,12 @@ impl App {
             load_words_effect: load_words_effect(theme.clone()),
             load_results_screen_effect: load_score_screen_effect(),
             last_tick_duration: Duration::ZERO,
-            is_debug_mode: false, // TODO - make cli switch
+            is_debug_mode: true, // TODO - make cli switch
             debug_string: "".to_string(),
             theme_name: theme_name.to_string(),
             themes: get_themes(),
             cursor_style: config.cursor,
+            ghost_offset: if config.target_wpm == 0 { None } else { Some(0.) },
             config,
         }
     }
