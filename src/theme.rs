@@ -1,4 +1,5 @@
 use ratatui::style::{Color, Style};
+use crate::ui::blend_colors;
 
 #[derive(Default, Clone, Debug)]
 pub struct Theme {
@@ -13,4 +14,11 @@ pub struct Theme {
     pub(crate) character_mismatch: Style,
     pub(crate) character_upcoming: Color,
     pub(crate) supports_alpha: bool,
+}
+
+impl Theme {
+    pub fn ghost_cursor_color(&self) -> Color {
+        blend_colors(self.secondary, self.bg, 0.25)
+    }
+
 }

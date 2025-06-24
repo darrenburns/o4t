@@ -117,15 +117,10 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
             if app.game_active {
                 app.refresh_internal_score();
                 if app.config.target_wpm > 0 {
-                    // Given the time elapsed since the last tick, how much should we move
-                    // the ghost cursor forward by?
-                    // If target_wpm is 60, then we expect to move 1 word (5 chars) + 1 space per second
-                    // So in the duration of a single tick, we expect to move:
-                    // 6 * (tick_duration_ms/1000ms)
                     match app.ghost_offset {
                         Some(current_ghost) => {
                             let last_tick_secs = app.last_tick_duration.as_secs_f64();
-                            let target_chars_per_minute = 6 * app.config.target_wpm;
+                            let target_chars_per_minute = 5 * app.config.target_wpm;
                             let target_chars_per_second = target_chars_per_minute as f64 / 60.;
                             let delta = target_chars_per_second * last_tick_secs;
                             let next_ghost = current_ghost + delta;
