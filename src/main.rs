@@ -124,11 +124,15 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> io::Result<
                     // 6 * (tick_duration_ms/1000ms)
                     match app.ghost_offset {
                         Some(current_ghost) => {
-                            let next_ghost = current_ghost + (6. * last_tick_millis as f64 / 1000.);
+                            let last_tick_secs = app.last_tick_duration.as_secs_f64();
+                            let target_chars_per_minute = 6 * app.config.target_wpm;
+                            let target_chars_per_second = target_chars_per_minute as f64 / 60.;
+                            let delta = target_chars_per_second * last_tick_secs;
+                            let next_ghost = current_ghost + delta;
                             app.ghost_offset = Some(next_ghost);
                         }
                         None => {}
-                    }   
+                    }
                 }
             }
         }
