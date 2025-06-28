@@ -51,6 +51,10 @@ o4t supports various themes, including `nord`, `catppuccin-mocha`, `dracula`, `g
 
 Themes prefixed with `terminal-` use your terminal emulator's ANSI colours.
 
+## Word lists
+
+This is a WIP - there's currently only 1 word list - "English Top 1k", and it's defined in code. The plan is to just be able to load arbitrary word lists from disk, but I haven't implemented that yet.
+
 ## Target WPM
 
 o4t can display a "pace cursor" which you can race against. The speed of this cursor is defined by the `target_wpm` config.
