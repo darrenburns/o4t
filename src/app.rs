@@ -150,7 +150,7 @@ impl App {
             load_words_effect: load_words_effect(theme.clone()),
             load_results_screen_effect: load_score_screen_effect(),
             last_tick_duration: Duration::ZERO,
-            is_debug_mode: true, // TODO - make cli switch
+            is_debug_mode: false, // TODO - make cli switch
             debug_string: "".to_string(),
             theme_name: theme_name.to_string(),
             themes: get_themes(),

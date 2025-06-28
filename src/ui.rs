@@ -189,8 +189,14 @@ fn build_game_screen(screen_frame: &mut Frame, app: &mut App) {
                     Span::styled(word, char_style.patch(current_theme.character_upcoming));
                 words_text.push_span(current_word_span);
             }
+            let mut space = Span::default().content(" ");
             if index != words.len() - 1 {
-                words_text.push_span(Span::default().content(" "));
+                if let Some(ghost_cursor_word_offset) = ghost_cursor_word_offset {
+                    if ghost_cursor_word_offset == word.len() {
+                        space = space.bg(current_theme.ghost_cursor_color())
+                    }
+                }
+                words_text.push_span(space);
             }
         } else {
             // It's not the current word, but we have attempted it - render the word attempt.
@@ -205,7 +211,13 @@ fn build_game_screen(screen_frame: &mut Frame, app: &mut App) {
                 ghost_cursor_word_offset,
             );
             if index != words.len() - 1 {
-                words_text.push_span(Span::default().content(" "));
+                let mut space = Span::default().content(" ");
+                if let Some(ghost_cursor_word_offset) = ghost_cursor_word_offset {
+                    if ghost_cursor_word_offset == word.len() {
+                        space = space.bg(current_theme.ghost_cursor_color())
+                    }
+                }
+                words_text.push_span(space);
             }
         }
     }
@@ -523,16 +535,15 @@ fn build_styled_word(
     ghost_cursor_offset: Option<usize>,
 ) {
     let current_theme = app.get_current_theme();
-    let ghost_cursor_style = Style::default().bg(current_theme.ghost_cursor_color());
     let mut offset_in_word = 0;
     let zipped_chars = expected_word
         .chars()
         .zip(user_attempt.chars())
         .collect::<Vec<_>>();
     let min_len = zipped_chars.len();
-    
+
     let mut char_style = char_style;
-    
+
     if is_current_word {
         match app.config.current_word {
             CurrentWord::Bold => char_style = char_style.add_modifier(Modifier::BOLD),
@@ -546,7 +557,7 @@ fn build_styled_word(
             _ => {}
         }
     }
-    
+
     for (expected_char, user_char) in zipped_chars {
         let mut style = char_style;
         let mut span;
@@ -563,7 +574,7 @@ fn build_styled_word(
         match ghost_cursor_offset {
             Some(ghost_cursor_offset) => {
                 if ghost_cursor_offset == offset_in_word {
-                    span = span.patch_style(ghost_cursor_style);
+                    span = span.bg(current_theme.ghost_cursor_color());
                 }
             }
             None => {}
@@ -587,15 +598,14 @@ fn build_styled_word(
 
     let mut missed_chars_iter = expected_word.chars().skip(min_len);
     if let Some(cursor_char) = missed_chars_iter.next() {
-        let missed_chars_span;
         if is_current_word {
-            missed_chars_span = Span::styled(
+            let upcoming_chars_in_this_word = Span::styled(
                 cursor_char.to_string(),
                 char_style.patch(cursor_type_to_ratatui_style(&app.cursor_style, app)),
             );
-            words_text.push_span(missed_chars_span);
+            words_text.push_span(upcoming_chars_in_this_word);
         } else {
-            missed_chars_span = Span::styled(cursor_char.to_string(), missed_char_style);
+            let missed_chars_span = Span::styled(cursor_char.to_string(), missed_char_style);
             words_text.push_span(missed_chars_span);
         }
     }
@@ -604,8 +614,16 @@ fn build_styled_word(
     if is_upcoming {
         missed_char_style = missed_char_style.patch(current_theme.character_upcoming)
     }
-    let span = Span::styled(missed_chars_iter.collect::<String>(), missed_char_style);
-    words_text.push_span(span);
+
+    for (idx, missed_char) in missed_chars_iter.enumerate() {
+        let mut char_style = missed_char_style;
+        if let Some(ghost_cursor_offset) = ghost_cursor_offset {
+            if ghost_cursor_offset == min_len + idx + 1 {
+                char_style = char_style.bg(current_theme.ghost_cursor_color());
+            }
+        }
+        words_text.push_span(Span::styled(missed_char.to_string(), char_style));
+    }
 
     // Render extra chars that the user typed beyond the length of the word
     let extra_chars_iter = user_attempt.chars().skip(min_len);

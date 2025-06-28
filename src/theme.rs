@@ -18,7 +18,7 @@ pub struct Theme {
 
 impl Theme {
     pub fn ghost_cursor_color(&self) -> Color {
-        blend_colors(self.secondary, self.bg, 0.25)
+        blend_colors(self.secondary, self.bg, 0.3)
     }
 
 }
