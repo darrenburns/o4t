@@ -25,6 +25,7 @@ Pass config to o4t via the CLI, environment variables, or `config.toml`.
 - `-c`/`--cursor`: either `underline`, `block`, or `none` - the type of cursor to use
 - `--theme`: the theme to use
 - `--current-word`: either `bold`, `highlight`, or `none` - how the word under the cursor should be highlighted
+- `--target-wpm`: if non-zero, displays a "ghost" cursor which moves at the specified wpm
 
 To use environment variables, simply take the name of the CLI option, prefix it with `O4T_`, upper-case it, and convert `-` to `_`. 
 
@@ -39,21 +40,22 @@ current_word = "highlight"
 cursor = "underline"
 theme = "gruvbox"
 time = 45
+target_wpm = 100
 ```
 
 CLI options have the highest precedence, followed by environment variables, followed by `config.toml`.
 
 ## Themes
 
-o4t supports various themes, like `dracula` and `tokyo-night`:
-
-<img width="765" alt="image" src="https://github.com/user-attachments/assets/efa3ea39-c4d1-41bd-bcab-02fe945d8275" />
-
-<img width="756" alt="image" src="https://github.com/user-attachments/assets/839e573c-9c27-4d5d-a9d8-ef3825668bc5" />
-
-Supported themes: `terminal-yellow`, `terminal-cyan`, `nord`, `catppuccin-mocha`, `dracula`, `gruvbox`, `solarized-dark`, `tokyo-night`, `monokai`, and `galaxy`.
+o4t supports various themes, including `nord`, `catppuccin-mocha`, `dracula`, `gruvbox`, `solarized-dark`, `tokyo-night`, `monokai`, `galaxy`, `terminal-yellow`, `terminal-cyan`.
 
 Themes prefixed with `terminal-` use your terminal emulator's ANSI colours.
+
+## Target WPM
+
+o4t can display a "pace cursor" which you can race against. The speed of this cursor is defined by the `target_wpm` config.
+
+![o4t-ghost-cursor-short](https://github.com/user-attachments/assets/bf69167a-4c83-4d70-83a5-8663a1d83ae7)
 
 ## History
 
